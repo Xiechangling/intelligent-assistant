@@ -20,7 +20,8 @@ body {
   background: #0f1115;
 }
 
-button {
+button,
+select {
   font: inherit;
 }
 
@@ -103,7 +104,8 @@ button {
 .toolbar__icon-button,
 .sidebar__button,
 .right-panel__tab,
-.bottom-panel__toggle {
+.bottom-panel__toggle,
+.sidebar__action {
   border: 1px solid #2b3342;
   background: #1b2230;
   color: #e8ebf0;
@@ -127,12 +129,25 @@ button {
   margin-top: 20px;
 }
 
+.sidebar__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .sidebar__title {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 13px;
   color: #98a2b3;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.sidebar__action {
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .sidebar__list {
@@ -151,6 +166,15 @@ button {
 .sidebar__button {
   width: 100%;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar__warning,
+.right-panel__warning,
+.workspace__warning {
+  color: #ffcc80;
 }
 
 .workspace {
@@ -180,6 +204,13 @@ button {
   line-height: 1.6;
 }
 
+.workspace__warning {
+  border: 1px solid #735b2f;
+  background: #2d2412;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
 .workspace__states {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -192,6 +223,10 @@ button {
   border-radius: 16px;
   padding: 18px;
   min-height: 180px;
+}
+
+.workspace__card--featured {
+  grid-column: span 3;
 }
 
 .right-panel__tabs {

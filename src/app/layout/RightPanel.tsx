@@ -6,6 +6,7 @@ export function RightPanel() {
     credentialStatus,
     globalDefaultModel,
     mode,
+    projectWarning,
     rightPanelView,
     setRightPanelView,
   } = useAppShellStore()
@@ -36,11 +37,13 @@ export function RightPanel() {
               <li>Model: {globalDefaultModel}</li>
               <li>Credential: {credentialStatus}</li>
             </ul>
+            {projectWarning ? <p className="right-panel__warning">{projectWarning}</p> : null}
           </>
         ) : (
           <>
             <h2>Settings</h2>
             <p>Mode, project, model, and credential settings expand from this panel in later phases.</p>
+            <p>Credential status: {credentialStatus}</p>
           </>
         )}
       </div>

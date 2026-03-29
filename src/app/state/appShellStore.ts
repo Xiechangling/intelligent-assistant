@@ -18,8 +18,10 @@ interface AppShellState {
   rightPanelView: RightPanelView
   bottomPanelExpanded: boolean
   credentialStatus: CredentialStatusSummary
+  projectWarning: string | null
   setMode: (mode: AppMode) => void
   setActiveProject: (project: ProjectRecord | null) => void
+  setRecentProjects: (projects: ProjectRecord[]) => void
   setShellView: (view: ShellView) => void
   setGlobalDefaultModel: (model: ModelId) => void
   setActiveSessionModelOverride: (model: ModelId | null) => void
@@ -44,6 +46,7 @@ export const useAppShellStore = create<AppShellState>((set) => ({
   rightPanelView: 'context',
   bottomPanelExpanded: false,
   credentialStatus: 'missing',
+  projectWarning: null,
   setMode: (mode) =>
     set({
       mode,
@@ -55,6 +58,7 @@ export const useAppShellStore = create<AppShellState>((set) => ({
         return {
           activeProjectPath: null,
           activeShellView: 'project-home',
+          projectWarning: null,
         }
       }
 
@@ -64,8 +68,13 @@ export const useAppShellStore = create<AppShellState>((set) => ({
         activeProjectPath: project.path,
         activeShellView: 'project-sessions',
         recentProjects: [project, ...filteredProjects],
+        projectWarning:
+          project.warning === 'non-standard'
+            ? 'This folder does not look like a standard project, but you can continue.'
+            : null,
       }
     }),
+  setRecentProjects: (recentProjects) => set({ recentProjects }),
   setShellView: (activeShellView) => set({ activeShellView }),
   setGlobalDefaultModel: (globalDefaultModel) => set({ globalDefaultModel }),
   setActiveSessionModelOverride: (activeSessionModelOverride) => set({ activeSessionModelOverride }),

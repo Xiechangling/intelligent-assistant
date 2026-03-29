@@ -1,3 +1,6 @@
+import { useEffect } from 'react'
+import { getRecentProjects, pickProjectDirectory } from '../services/projectService'
+import { getCredentialStatus } from '../services/credentialService'
 import { useAppShellStore } from '../state/appShellStore'
 
 const modelOptions = [
@@ -6,6 +9,8 @@ const modelOptions = [
   { label: 'Claude Haiku', value: 'claude-haiku' },
 ] as const
 
+const demoProjectPath = 'E:/work/ai/agent'
+
 export function TopToolbar() {
   const {
     mode,
@@ -13,8 +18,34 @@ export function TopToolbar() {
     globalDefaultModel,
     credentialStatus,
     setMode,
+    setActiveProject,
+    setRecentProjects,
     setGlobalDefaultModel,
+    setCredentialStatus,
   } = useAppShellStore()
+
+  useEffect(() => {
+    getRecentProjects()
+      .then((projects) => {
+        if (projects.length > 0) {
+          setRecentProjects(projects)
+        }
+      })
+      .catch(() => undefined)
+
+    getCredentialStatus()
+      .then((status) => setCredentialStatus(status))
+      .catch(() => setCredentialStatus('error'))
+  }, [setCredentialStatus, setRecentProjects])
+
+  const handleProjectPick = async () => {
+    try {
+      const project = await pickProjectDirectory(demoProjectPath)
+      setActiveProject(project)
+    } catch {
+      setCredentialStatus('error')
+    }
+  }
 
   return (
     <div className="toolbar">
@@ -36,7 +67,9 @@ export function TopToolbar() {
 
       <div className="toolbar__group toolbar__group--grow">
         <span className="toolbar__label">Project</span>
-        <button className="toolbar__select">{activeProjectPath ?? 'No project selected'}</button>
+        <button className="toolbar__select" onClick={handleProjectPick}>
+          {activeProjectPath ?? 'Open project folder'}
+        </button>
       </div>
 
       <div className="toolbar__group">

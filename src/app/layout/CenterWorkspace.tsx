@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useAppShellStore } from '../state/appShellStore'
 
 export function CenterWorkspace() {
-  const { activeProjectPath, activeShellView, mode } = useAppShellStore()
+  const { activeProjectPath, activeShellView, mode, projectWarning } = useAppShellStore()
 
   const viewContent = useMemo(() => {
     if (activeShellView === 'project-sessions') {
@@ -34,6 +34,8 @@ export function CenterWorkspace() {
           This shell reserves space for project mode, conversation mode, and project session flows.
         </p>
       </div>
+
+      {projectWarning ? <div className="workspace__warning">{projectWarning}</div> : null}
 
       <div className="workspace__states">
         <section className="workspace__card workspace__card--featured">
