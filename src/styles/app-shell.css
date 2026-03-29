@@ -1,0 +1,220 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, "Segoe UI", sans-serif;
+  background: #0f1115;
+  color: #e8ebf0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: #0f1115;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  grid-template-rows: 64px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "top top top"
+    "left center right"
+    "bottom bottom bottom";
+  min-height: 100vh;
+  background: #131722;
+}
+
+.app-shell__top {
+  grid-area: top;
+  border-bottom: 1px solid #242a36;
+  background: #151a25;
+}
+
+.app-shell__left {
+  grid-area: left;
+  border-right: 1px solid #242a36;
+  background: #111620;
+}
+
+.app-shell__center {
+  grid-area: center;
+  min-width: 0;
+  background: #171c28;
+}
+
+.app-shell__right {
+  grid-area: right;
+  border-left: 1px solid #242a36;
+  background: #111620;
+}
+
+.app-shell__bottom {
+  grid-area: bottom;
+  border-top: 1px solid #242a36;
+  background: #10141d;
+}
+
+.toolbar,
+.sidebar,
+.right-panel,
+.workspace,
+.bottom-panel {
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+}
+
+.toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar__group--grow {
+  flex: 1;
+}
+
+.toolbar__label {
+  color: #98a2b3;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.toolbar__chip,
+.toolbar__select,
+.toolbar__icon-button,
+.sidebar__button,
+.right-panel__tab,
+.bottom-panel__toggle {
+  border: 1px solid #2b3342;
+  background: #1b2230;
+  color: #e8ebf0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.toolbar__chip--active,
+.right-panel__tab--active {
+  border-color: #4f7cff;
+  background: #21345e;
+}
+
+.sidebar,
+.right-panel {
+  padding: 16px;
+}
+
+.sidebar__section + .sidebar__section {
+  margin-top: 20px;
+}
+
+.sidebar__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #98a2b3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sidebar__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar__item {
+  margin: 0;
+}
+
+.sidebar__button {
+  width: 100%;
+  text-align: left;
+}
+
+.workspace {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.workspace__eyebrow {
+  display: inline-block;
+  color: #7ca2ff;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.workspace__title {
+  margin: 8px 0 12px;
+  font-size: 32px;
+}
+
+.workspace__body {
+  margin: 0;
+  max-width: 720px;
+  color: #b7c0cf;
+  line-height: 1.6;
+}
+
+.workspace__states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.workspace__card {
+  border: 1px solid #2b3342;
+  background: #121825;
+  border-radius: 16px;
+  padding: 18px;
+  min-height: 180px;
+}
+
+.right-panel__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.right-panel__content {
+  border: 1px solid #2b3342;
+  border-radius: 16px;
+  padding: 16px;
+  background: #121825;
+}
+
+.bottom-panel {
+  padding: 12px 20px;
+}
+
+.bottom-panel__content {
+  margin-top: 12px;
+  border: 1px solid #2b3342;
+  border-radius: 14px;
+  padding: 16px;
+  background: #121825;
+}
