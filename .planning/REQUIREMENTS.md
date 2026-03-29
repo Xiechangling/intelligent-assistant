@@ -7,9 +7,9 @@
 
 ### Projects
 
-- [ ] **PROJ-01**: User can add and open a local project directory from the desktop app.
-- [ ] **PROJ-02**: User can switch between previously added project directories.
-- [ ] **PROJ-03**: User can see the currently active project context clearly before running actions.
+- [x] **PROJ-01**: User can add and open a local project directory from the desktop app.
+- [x] **PROJ-02**: User can switch between previously added project directories.
+- [x] **PROJ-03**: User can see the currently active project context clearly before running actions.
 
 ### Sessions
 
@@ -20,8 +20,8 @@
 
 ### Models & Config
 
-- [ ] **CONF-01**: User can choose the active Claude model from the desktop UI.
-- [ ] **CONF-02**: User can switch models for future interactions without editing CLI configuration manually.
+- [x] **CONF-01**: User can choose the active Claude model from the desktop UI.
+- [x] **CONF-02**: User can switch models for future interactions without editing CLI configuration manually.
 - [ ] **CONF-03**: User can save and reuse configuration templates or presets.
 - [ ] **CONF-04**: User can configure available skills or workflow capabilities from the desktop UI.
 
@@ -44,7 +44,7 @@
 
 ### Security & Local State
 
-- [ ] **SECR-01**: User can store required API credentials securely on the local machine.
+- [x] **SECR-01**: User can store required API credentials securely on the local machine.
 - [ ] **SECR-02**: User sessions preserve project association, model choice, and key metadata across app restarts.
 
 ## v2 Requirements
@@ -72,12 +72,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PROJ-01 | Phase 1 | Pending |
-| PROJ-02 | Phase 1 | Pending |
-| PROJ-03 | Phase 1 | Pending |
-| CONF-01 | Phase 1 | Pending |
-| CONF-02 | Phase 1 | Pending |
-| SECR-01 | Phase 1 | Pending |
+| PROJ-01 | Phase 1 | Complete |
+| PROJ-02 | Phase 1 | Complete |
+| PROJ-03 | Phase 1 | Complete |
+| CONF-01 | Phase 1 | Complete |
+| CONF-02 | Phase 1 | Complete |
+| SECR-01 | Phase 1 | Complete |
 | SESS-01 | Phase 2 | Pending |
 | SESS-02 | Phase 2 | Pending |
 | SESS-03 | Phase 2 | Pending |

@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-29T17:20:24.801Z"
+progress:
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
+---
+
 # STATE
 
 ## Project Reference
@@ -5,7 +18,7 @@
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Make Claude Code-style local coding workflows significantly easier to configure, control, and reuse from a desktop interface without losing the power of project-aware agent execution.
-**Current focus:** Phase 1 — Desktop Shell & Project Foundation
+**Current focus:** Phase 01 — desktop-shell-project-foundation
 
 ## Current Status
 
