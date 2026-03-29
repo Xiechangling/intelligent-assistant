@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Intelligent Assistant",
         "width": 1440,
         "height": 900,
@@ -19,7 +20,10 @@
         "minHeight": 700,
         "resizable": true
       }
-    ]
+    ],
+    "security": {
+      "capabilities": ["default"]
+    }
   },
   "bundle": {
     "active": true,
