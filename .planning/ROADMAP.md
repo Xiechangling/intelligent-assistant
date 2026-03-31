@@ -43,6 +43,7 @@
 4. Session state preserves key context such as project association, model choice, and recent task status.
 
 **UI hint:** yes
+**Status:** Complete on 2026-03-30
 
 ### Phase 3: Conversational Coding Workflow
 **Goal:** Deliver the core desktop interaction loop for natural-language coding assistance with streaming responses in the chosen project context.
@@ -56,6 +57,7 @@
 4. Conversation activity remains associated with the active project and session.
 
 **UI hint:** yes
+**Status:** Complete on 2026-03-30
 
 ### Phase 4: Safe Execution & Visibility
 **Goal:** Make assistant-driven actions trustworthy by adding approval controls, execution output visibility, and explicit working-context safeguards.
@@ -69,6 +71,7 @@
 4. Command execution state stays synchronized with the active session timeline.
 
 **UI hint:** yes
+**Status:** Complete on 2026-03-30
 
 ### Phase 5: Review, Skills & Workflow Polish
 **Goal:** Finish the MVP with review surfaces and configuration ergonomics that make the product meaningfully better than terminal-only usage.
@@ -83,3 +86,4 @@
 5. Core desktop workflow feels cohesive across project, session, execution, and review surfaces.
 
 **UI hint:** yes
+**Status:** Complete on 2026-03-30

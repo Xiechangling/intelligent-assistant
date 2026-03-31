@@ -12,12 +12,11 @@ Make Claude Code-style local coding workflows significantly easier to configure,
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] User can start, resume, and manage coding sessions through a natural-language desktop interface. Validated in Phase 2 after user approval of session persistence, recovery, and session-history UI.
 
 ### Active
 
 - [ ] User can open the desktop app, select or manage a local project directory, and work against that project context.
-- [ ] User can start, resume, and manage coding sessions through a natural-language desktop interface.
 - [ ] User can switch models, adjust key runtime configuration, and review command/diff outcomes from the GUI.
 
 ### Out of Scope
@@ -50,6 +49,8 @@ The product is motivated by daily use of Claude Code in the terminal for knowled
 
 This document evolves at phase transitions and milestone boundaries.
 
+**Current state:** Phase 2 is validated for local session persistence, recovery, and history UX after user approval.
+
 **After each phase transition** (via `/gsd:transition`):
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
@@ -64,4 +65,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after initialization*
+*Last updated: 2026-03-30 after Phase 2 implementation pass*

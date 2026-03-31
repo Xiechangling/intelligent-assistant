@@ -13,39 +13,39 @@
 
 ### Sessions
 
-- [ ] **SESS-01**: User can start a new coding session for a selected project.
-- [ ] **SESS-02**: User can resume a previous session with its transcript and metadata.
-- [ ] **SESS-03**: User can browse session history filtered by project.
-- [ ] **SESS-04**: User can see active session state, including current model and task/activity status.
+- [x] **SESS-01**: User can start a new coding session for a selected project.
+- [x] **SESS-02**: User can resume a previous session with its transcript and metadata.
+- [x] **SESS-03**: User can browse session history filtered by project.
+- [x] **SESS-04**: User can see active session state, including current model and task/activity status.
 
 ### Models & Config
 
 - [x] **CONF-01**: User can choose the active Claude model from the desktop UI.
 - [x] **CONF-02**: User can switch models for future interactions without editing CLI configuration manually.
-- [ ] **CONF-03**: User can save and reuse configuration templates or presets.
-- [ ] **CONF-04**: User can configure available skills or workflow capabilities from the desktop UI.
+- [x] **CONF-03**: User can save and reuse configuration templates or presets.
+- [x] **CONF-04**: User can configure available skills or workflow capabilities from the desktop UI.
 
 ### Assistant Interaction
 
-- [ ] **CHAT-01**: User can send natural-language prompts in a desktop conversation interface.
-- [ ] **CHAT-02**: User can receive streaming assistant responses in the current session.
-- [ ] **CHAT-03**: User can use the app to perform Claude Code-style tasks such as knowledge Q&A, code analysis, and code modification within the selected project context.
+- [x] **CHAT-01**: User can send natural-language prompts in a desktop conversation interface.
+- [x] **CHAT-02**: User can receive streaming assistant responses in the current session.
+- [x] **CHAT-03**: User can use the app to perform Claude Code-style tasks such as knowledge Q&A, code analysis, and code modification within the selected project context.
 
 ### Execution & Approval
 
-- [ ] **EXEC-01**: User can review and approve or reject proposed commands before execution when actions are impactful.
-- [ ] **EXEC-02**: User can see command execution output and task progress in the desktop UI.
-- [ ] **EXEC-03**: User can see which project and working context a command will run against before approving it.
+- [x] **EXEC-01**: User can review and approve or reject proposed commands before execution when actions are impactful.
+- [x] **EXEC-02**: User can see command execution output and task progress in the desktop UI.
+- [x] **EXEC-03**: User can see which project and working context a command will run against before approving it.
 
 ### Review
 
-- [ ] **REVW-01**: User can inspect changed files associated with assistant actions.
-- [ ] **REVW-02**: User can preview diffs for project changes generated during a session.
+- [x] **REVW-01**: User can inspect changed files associated with assistant actions.
+- [x] **REVW-02**: User can preview diffs for project changes generated during a session.
 
 ### Security & Local State
 
 - [x] **SECR-01**: User can store required API credentials securely on the local machine.
-- [ ] **SECR-02**: User sessions preserve project association, model choice, and key metadata across app restarts.
+- [x] **SECR-02**: User sessions preserve project association, model choice, and key metadata across app restarts.
 
 ## v2 Requirements
 
@@ -78,21 +78,21 @@
 | CONF-01 | Phase 1 | Complete |
 | CONF-02 | Phase 1 | Complete |
 | SECR-01 | Phase 1 | Complete |
-| SESS-01 | Phase 2 | Pending |
-| SESS-02 | Phase 2 | Pending |
-| SESS-03 | Phase 2 | Pending |
-| SESS-04 | Phase 2 | Pending |
-| SECR-02 | Phase 2 | Pending |
-| CHAT-01 | Phase 3 | Pending |
-| CHAT-02 | Phase 3 | Pending |
-| CHAT-03 | Phase 3 | Pending |
-| EXEC-01 | Phase 4 | Pending |
-| EXEC-02 | Phase 4 | Pending |
-| EXEC-03 | Phase 4 | Pending |
-| REVW-01 | Phase 5 | Pending |
-| REVW-02 | Phase 5 | Pending |
-| CONF-03 | Phase 5 | Pending |
-| CONF-04 | Phase 5 | Pending |
+| SESS-01 | Phase 2 | Complete |
+| SESS-02 | Phase 2 | Complete |
+| SESS-03 | Phase 2 | Complete |
+| SESS-04 | Phase 2 | Complete |
+| SECR-02 | Phase 2 | Complete |
+| CHAT-01 | Phase 3 | Complete |
+| CHAT-02 | Phase 3 | Complete |
+| CHAT-03 | Phase 3 | Complete |
+| EXEC-01 | Phase 4 | Complete |
+| EXEC-02 | Phase 4 | Complete |
+| EXEC-03 | Phase 4 | Complete |
+| REVW-01 | Phase 5 | Complete |
+| REVW-02 | Phase 5 | Complete |
+| CONF-03 | Phase 5 | Complete |
+| CONF-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 21 total
@@ -101,4 +101,4 @@
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initial definition*
+*Last updated: 2026-03-30 after Phase 5 implementation pass*

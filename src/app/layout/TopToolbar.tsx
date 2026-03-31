@@ -1,27 +1,47 @@
+import { FolderOpen, MessageSquare, Settings, Shield, Sparkles } from 'lucide-react'
 import { useEffect } from 'react'
 import { getRecentProjects, pickProjectDirectory } from '../services/projectService'
 import { getCredentialStatus } from '../services/credentialService'
 import { useAppShellStore } from '../state/appShellStore'
 
-const modelOptions = [
-  { label: 'Claude Sonnet', value: 'claude-sonnet' },
-  { label: 'Claude Opus', value: 'claude-opus' },
-  { label: 'Claude Haiku', value: 'claude-haiku' },
-] as const
+function formatRelativeTime(timestamp: string | null) {
+  if (!timestamp) {
+    return 'No recent activity'
+  }
 
-const demoProjectPath = 'E:/work/ai/agent'
+  const delta = Date.now() - Number(timestamp)
+  const minutes = Math.max(1, Math.round(delta / 60000))
+  if (minutes < 60) {
+    return `${minutes}m ago`
+  }
+
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) {
+    return `${hours}h ago`
+  }
+
+  const days = Math.round(hours / 24)
+  return `${days}d ago`
+}
 
 export function TopToolbar() {
   const {
     mode,
     activeProjectPath,
-    globalDefaultModel,
+    activePresetId,
     credentialStatus,
+    activeSession,
+    assistantStatus,
+    currentStageLabel,
+    executionRecord,
+    pendingProposal,
+    presets,
     setMode,
     setActiveProject,
     setRecentProjects,
-    setGlobalDefaultModel,
     setCredentialStatus,
+    setRightPanelOpen,
+    setRightPanelView,
   } = useAppShellStore()
 
   useEffect(() => {
@@ -40,59 +60,80 @@ export function TopToolbar() {
 
   const handleProjectPick = async () => {
     try {
-      const project = await pickProjectDirectory(demoProjectPath)
+      const project = await pickProjectDirectory()
+      if (!project) {
+        return
+      }
+
       setActiveProject(project)
     } catch {
-      setCredentialStatus('error')
+      console.error('Failed to pick project directory')
     }
+  }
+
+  const activePreset = presets.find((preset) => preset.id === activePresetId)
+  const title = activeSession?.title ?? (mode === 'project' ? 'Project workspace' : 'Conversation')
+  const meta = activeSession
+    ? `${formatRelativeTime(activeSession.lastActivityAt)} · ${activeSession.projectName}`
+    : mode === 'project'
+      ? activeProjectPath ?? 'Open a project to begin'
+      : 'Start a direct conversation'
+
+  const statusLabel = pendingProposal
+    ? 'Approval required'
+    : executionRecord
+      ? `Execution ${executionRecord.status}`
+      : assistantStatus === 'streaming'
+        ? currentStageLabel ?? 'Responding'
+        : 'Ready'
+
+  const openInspector = (view: 'context' | 'settings') => {
+    setRightPanelView(view)
+    setRightPanelOpen(true)
   }
 
   return (
     <div className="toolbar">
-      <div className="toolbar__group">
-        <span className="toolbar__label">Mode</span>
-        <button
-          className={`toolbar__chip ${mode === 'project' ? 'toolbar__chip--active' : ''}`}
-          onClick={() => setMode('project')}
-        >
-          Project
+      <div className="toolbar__left-cluster">
+        <div className="toolbar__segmented" role="tablist" aria-label="Mode switcher">
+          <button
+            className={`toolbar__segment ${mode === 'project' ? 'toolbar__segment--active' : ''}`}
+            onClick={() => setMode('project')}
+            title="Project mode"
+          >
+            <Sparkles size={14} />
+            <span>Project</span>
+          </button>
+          <button
+            className={`toolbar__segment ${mode === 'conversation' ? 'toolbar__segment--active' : ''}`}
+            onClick={() => setMode('conversation')}
+            title="Conversation mode"
+          >
+            <MessageSquare size={14} />
+            <span>Chat</span>
+          </button>
+        </div>
+
+        <button className="toolbar__project-button" onClick={handleProjectPick} title={activeProjectPath ?? 'Open project folder'}>
+          <FolderOpen size={15} />
+          <span>{activeProjectPath ?? 'Open project'}</span>
         </button>
-        <button
-          className={`toolbar__chip ${mode === 'conversation' ? 'toolbar__chip--active' : ''}`}
-          onClick={() => setMode('conversation')}
-        >
-          Conversation
+      </div>
+
+      <div className="toolbar__context">
+        <strong className="toolbar__context-title">{title}</strong>
+        <span className="toolbar__context-meta">{meta}</span>
+      </div>
+
+      <div className="toolbar__utility">
+        <span className="toolbar__status-chip">{statusLabel}</span>
+        {activePreset ? <span className="toolbar__utility-meta toolbar__utility-meta--pill">{activePreset.name}</span> : null}
+        <button className="toolbar__icon-button" onClick={() => openInspector('context')} title={`Context · ${credentialStatus}`}>
+          <Shield size={15} />
         </button>
-      </div>
-
-      <div className="toolbar__group toolbar__group--grow">
-        <span className="toolbar__label">Project</span>
-        <button className="toolbar__select" onClick={handleProjectPick}>
-          {activeProjectPath ?? 'Open project folder'}
+        <button className="toolbar__icon-button" onClick={() => openInspector('settings')} title="Settings">
+          <Settings size={15} />
         </button>
-      </div>
-
-      <div className="toolbar__group">
-        <span className="toolbar__label">Model</span>
-        <select
-          className="toolbar__select"
-          value={globalDefaultModel}
-          onChange={(event) => setGlobalDefaultModel(event.target.value as (typeof modelOptions)[number]['value'])}
-        >
-          {modelOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="toolbar__group">
-        <button className="toolbar__icon-button">Credential: {credentialStatus}</button>
-      </div>
-
-      <div className="toolbar__group">
-        <button className="toolbar__icon-button">Settings</button>
       </div>
     </div>
   )
