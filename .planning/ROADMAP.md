@@ -42,7 +42,16 @@ Plans:
   2. 用户看到重构后的左侧栏（顶部操作区 + Projects 列表 + Sessions 列表），固定宽度 360px
   3. 用户看到纯净的中央对话区域，右侧抽屉、底部托盘、审批面板、审查面板已完全移除
   4. 用户调整窗口大小时，左侧栏保持固定宽度，中央区域自适应
-**Plans**: TBD
+**Plans**: 7 plans in 4 waves
+
+Plans:
+- [ ] 08-01-PLAN.md — 清理 appShellStore 状态，移除审批/审查状态，添加导航历史
+- [ ] 08-02-PLAN.md — 归档 RightPanel 和 BottomPanel 组件
+- [ ] 08-03-PLAN.md — 更新 AppShell 移除旧面板，简化为两列布局
+- [ ] 08-04-PLAN.md — 重写 TopToolbar（窗口控制 + 导航 + 三模式标签）
+- [ ] 08-05-PLAN.md — 重写 LeftSidebar（顶部操作区 + 列表）
+- [ ] 08-06-PLAN.md — 清理 CenterWorkspace，增强 Composer
+- [ ] 08-07-PLAN.md — 人工验证所有布局重构成果
 
 ### Phase 9: 增强交互功能
 **Goal**: 实现官方 UI 的核心交互功能，包括三模式切换、导航、搜索、增强输入框
@@ -78,9 +87,9 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 7. 技术准备与基础组件 | 5/5 | Complete | 2026-04-08 |
-| 8. 核心布局重构 | 0/0 | Not started | - |
+| 8. 核心布局重构 | 0/7 | Planning | - |
 | 9. 增强交互功能 | 0/0 | Not started | - |
 | 10. 视觉对齐与打磨 | 0/0 | Not started | - |
 
 ---
-*Last updated: 2026-04-09*
+*Last updated: 2026-04-08*
