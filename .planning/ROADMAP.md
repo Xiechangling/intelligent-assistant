@@ -22,10 +22,10 @@
 
 ## Phases
 
-### Phase 1: 顶栏简化与视觉基础 ⏳
+### Phase 1: 顶栏简化与视觉基础 ✅
 **Duration:** 2-3 days  
 **Priority:** HIGH  
-**Status:** pending
+**Status:** completed
 
 **Goal:** 顶栏简化立即提升产品感，建立视觉基础设施为后续阶段铺路
 
@@ -37,12 +37,9 @@
 - REQ-09: Focus Ring 样式
 - REQ-11: 快捷键提示组件
 
-**Deliverables:**
-- [ ] 轻量 chrome 顶栏（TopToolbar.tsx 重构）
-- [ ] 官方颜色 token（styles/tokens.css）
-- [ ] 统一间距系统（styles/spacing.css）
-- [ ] Focus ring 样式（styles/focus.css）
-- [ ] KeyboardShortcutHint 组件
+**Plans:** 2 plans
+- [x] 01-01-PLAN.md — 建立视觉基础设施（颜色 token、间距系统、focus ring、KeyboardShortcutHint）
+- [x] 01-02-PLAN.md — 简化顶栏为轻量 chrome（48px，3 元素布局）
 
 **Success Criteria:**
 - 顶栏高度 48px，仅 3 个元素
@@ -58,7 +55,7 @@
 ### Phase 2: 中央工作区单流化 ⏳
 **Duration:** 4-5 days  
 **Priority:** HIGH  
-**Status:** pending
+**Status:** planned
 
 **Goal:** 单流式对话体验是对齐官方的关键，内联卡片 + 托盘双轨平滑过渡
 
@@ -67,15 +64,10 @@
 - REQ-13: 内联卡片组件（approval/review/status）
 - REQ-14: 虚拟化消息列表（可选）
 
-**Deliverables:**
-- [ ] FullscreenLayout 单流式布局组件
-- [ ] InlineApprovalCard 组件
-- [ ] InlineReviewCard 组件
-- [ ] InlineStatusCard 组件
-- [ ] 简化 session header
-- [ ] 合并 chooser 到左侧栏
-- [ ] 内联卡片与托盘联动逻辑
-- [ ] VirtualMessageList 组件（可选）
+**Plans:** 3 plans
+- [ ] 02-01-PLAN.md — 内联卡片与底部托盘联动（approval/review/status 内联卡片 + 点击展开托盘）
+- [ ] 02-02-PLAN.md — 简化 session header（移除元数据网格，状态芯片移至 header）
+- [ ] 02-03-PLAN.md — 修复 E2E 测试（更新状态芯片定位器）
 
 **Success Criteria:**
 - 对话流占中央工作区 70%+ 视觉权重
@@ -209,12 +201,12 @@
 
 ## Progress Tracking
 
-**Overall Progress:** 0/5 phases (0%)
+**Overall Progress:** 1/5 phases (20%)
 
 | Phase | Status | Progress | ETA |
 |-------|--------|----------|-----|
-| Phase 1: 顶栏简化与视觉基础 | pending | 0/6 | - |
-| Phase 2: 中央工作区单流化 | pending | 0/8 | - |
+| Phase 1: 顶栏简化与视觉基础 | completed | 2/2 | 2026-04-08 |
+| Phase 2: 中央工作区单流化 | planned | 0/3 | - |
 | Phase 3: 左侧栏导航化与键盘交互 | pending | 0/7 | - |
 | Phase 4: 辅助面板抽屉化与组件样式对齐 | pending | 0/7 | - |
 | Phase 5: 主题系统增强 | pending | 0/5 | - |
