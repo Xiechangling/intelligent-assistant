@@ -11,7 +11,7 @@
 **Goal:** 将桌面应用从"控制台化"布局全面对齐到官方"内容优先、轻量 chrome"的单流式对话架构
 
 **Timeline:** 12-17 days  
-**Progress:** 2/5 phases (40%)
+**Progress:** 3/5 phases (60%)
 
 ### Phase Status
 
@@ -19,16 +19,16 @@
 |-------|--------|----------|---------|-----------|
 | Phase 1: 顶栏简化与视觉基础 | completed | 2/2 | 2026-04-08 | 2026-04-08 |
 | Phase 2: 中央工作区单流化 | completed | 3/3 | 2026-04-08 | 2026-04-08 |
-| Phase 3: 左侧栏导航化与键盘交互 | pending | 0/7 | - | - |
+| Phase 3: 左侧栏导航化与键盘交互 | completed | 4/4 | 2026-04-08 | 2026-04-08 |
 | Phase 4: 辅助面板抽屉化与组件样式对齐 | pending | 0/7 | - | - |
 | Phase 5: 主题系统增强 | pending | 0/5 | - | - |
 
 ### Requirements Status
 
 **Total:** 15 requirements  
-**Completed:** 4 (REQ-01, REQ-05, REQ-06, REQ-07, REQ-09, REQ-11)  
+**Completed:** 7 (REQ-01, REQ-03, REQ-05, REQ-06, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11)  
 **In Progress:** 0  
-**Pending:** 9
+**Pending:** 8
 
 ---
 
@@ -95,14 +95,30 @@
 - Fix text expectations to match actual component output
 - Defer Phase 1 mode switcher test to out-of-scope
 
+### Phase 3 Decisions
+
+**Left Sidebar Navigation (Plan 03-01):**
+- Remove brand area completely for minimal design
+- Remove expand/collapse logic - lists always visible
+- Move project picker from topbar to sidebar top with ctrl+o hint
+
+**Global Keybindings (Plan 03-02):**
+- Use window keydown listener for global shortcuts
+- Support macOS Option key mapping (†/ø/´ characters)
+- Make keybindings configurable via settings panel
+
+**Input History (Plan 03-03):**
+- Use localStorage for persistence (max 50 entries)
+- Filter sensitive data (api_key, password, email patterns)
+- Save draft when navigating, restore with ↓
+
 ---
 
 ## Next Steps
 
-1. **Phase 3 Planning:** 创建 Phase 3 详细计划（左侧栏导航化与键盘交互）
-2. **Phase 3 Execution:** 执行 Phase 3 计划
-3. **Resolve Deferred Item:** 决定是否保留/移除/重新实现模式切换功能
-4. **Phase 3 Verification:** 验证 Phase 3 交付物
+1. **Phase 4 Planning:** 创建 Phase 4 详细计划（辅助面板抽屉化与组件样式对齐）
+2. **Phase 4 Execution:** 执行 Phase 4 计划
+3. **Phase 4 Verification:** 验证 Phase 4 交付物
 
 ---
 
@@ -132,6 +148,10 @@ None - Phase 2 complete, ready for Phase 3 planning.
 | 02 | 01 | 15min | 3 | 2 | 2026-04-08T20:45:00Z |
 | 02 | 02 | 10min | 2 | 2 | 2026-04-08T20:50:00Z |
 | 02 | 03 | 25min | 4 | 3 | 2026-04-08T21:00:00Z |
+| 03 | 01 | 15min | 3 | 3 | 2026-04-08T13:10:00Z |
+| 03 | 02 | 12min | 3 | 4 | 2026-04-08T13:12:00Z |
+| 03 | 03 | 10min | 3 | 2 | 2026-04-08T13:14:00Z |
+| 03 | 04 | 8min | 3 | 1 | 2026-04-08T13:16:00Z |
 
 ---
 
@@ -139,6 +159,7 @@ None - Phase 2 complete, ready for Phase 3 planning.
 
 - v2.2 Phase 1 完成（视觉基础设施 + 轻量 chrome 顶栏）
 - v2.2 Phase 2 完成（中央工作区单流化 + 内联卡片交互）
+- v2.2 Phase 3 完成（左侧栏导航化 + 全局快捷键 + 输入历史）
 - 4 个官方颜色 token 已添加
 - 间距系统统一为 8px 基数
 - Focus ring 增强（outline 替代 box-shadow）
@@ -146,8 +167,13 @@ None - Phase 2 complete, ready for Phase 3 planning.
 - 顶栏简化为 3 元素布局（48px 高度）
 - Session header 简化为单行布局（移除 metadata grid）
 - 内联卡片可点击展开底部托盘（带视觉提示）
+- 左侧栏无品牌区和展开/折叠按钮
+- 项目选择器移至左侧栏顶部
+- 全局快捷键系统（ctrl+t/o/e + macOS Option 映射）
+- 输入历史导航（↑/↓ + localStorage 持久化）
 - E2E 测试更新完成（21/22 通过，95.5% 通过率）
-- 准备进入 Phase 3 规划阶段
+- 新增 keyboard-navigation.spec.ts（11 个测试）
+- 准备进入 Phase 4 规划阶段
 
 ---
 

@@ -52,10 +52,10 @@
 
 ---
 
-### Phase 2: 中央工作区单流化 ⏳
+### Phase 2: 中央工作区单流化 ✅
 **Duration:** 4-5 days  
 **Priority:** HIGH  
-**Status:** planned
+**Status:** completed
 
 **Goal:** 单流式对话体验是对齐官方的关键，内联卡片 + 托盘双轨平滑过渡
 
@@ -65,9 +65,9 @@
 - REQ-14: 虚拟化消息列表（可选）
 
 **Plans:** 3 plans
-- [ ] 02-01-PLAN.md — 内联卡片与底部托盘联动（approval/review/status 内联卡片 + 点击展开托盘）
-- [ ] 02-02-PLAN.md — 简化 session header（移除元数据网格，状态芯片移至 header）
-- [ ] 02-03-PLAN.md — 修复 E2E 测试（更新状态芯片定位器）
+- [x] 02-01-PLAN.md — 内联卡片与底部托盘联动（approval/review/status 内联卡片 + 点击展开托盘）
+- [x] 02-02-PLAN.md — 简化 session header（移除元数据网格，状态芯片移至 header）
+- [x] 02-03-PLAN.md — 修复 E2E 测试（更新状态芯片定位器）
 
 **Success Criteria:**
 - 对话流占中央工作区 70%+ 视觉权重
@@ -80,10 +80,10 @@
 
 ---
 
-### Phase 3: 左侧栏导航化与键盘交互 ⏳
+### Phase 3: 左侧栏导航化与键盘交互 ✅
 **Duration:** 3-4 days  
 **Priority:** MEDIUM  
-**Status:** planned
+**Status:** completed
 
 **Goal:** 左侧栏导航化简化信息架构，键盘交互系统提升效率
 
@@ -93,10 +93,21 @@
 - REQ-10: 输入框历史导航（↑/↓）
 
 **Plans:** 4 plans
-- [ ] 03-01-PLAN.md — 左侧栏导航化（移除品牌区、展开/折叠，项目选择器移至顶部）
-- [ ] 03-02-PLAN.md — 全局快捷键系统（useGlobalKeybindings hook，ctrl+t/o/e，macOS Option 映射）
-- [ ] 03-03-PLAN.md — 输入框历史导航（↑/↓，localStorage 持久化）
-- [ ] 03-04-PLAN.md — 键盘导航 E2E 测试
+- [x] 03-01-PLAN.md — 左侧栏导航化（移除品牌区、展开/折叠，项目选择器移至顶部）
+- [x] 03-02-PLAN.md — 全局快捷键系统（useGlobalKeybindings hook，ctrl+t/o/e，macOS Option 映射）
+- [x] 03-03-PLAN.md — 输入框历史导航（↑/↓，localStorage 持久化）
+- [x] 03-04-PLAN.md — 键盘导航 E2E 测试
+
+**Success Criteria:**
+- 左侧栏无品牌区和展开/折叠按钮
+- 项目选择器在左侧栏顶部
+- ctrl+t/o/e 快捷键工作
+- macOS Option 键映射工作
+- 输入历史导航（↑/↓）工作
+- 历史持久化到 localStorage
+- E2E 测试通过（keyboard-navigation）
+
+**Dependencies:** Phase 1（视觉 token、快捷键提示组件）
 
 **Success Criteria:**
 - 左侧栏仅包含项目列表 + 会话历史
