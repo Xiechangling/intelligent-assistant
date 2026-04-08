@@ -221,7 +221,7 @@ test('approving a proposal records approval before execution result states', asy
   await page.locator('.bottom-panel__approval-actions').getByRole('button', { name: 'Approve and run' }).click()
 
   await expect(page.locator('.bottom-panel__status')).toHaveText('Execution complete')
-  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Execution finished and the session is ready for the next step')
+  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Execution finished without changed files')
   await expect(page.locator('.right-panel__row').filter({ hasText: 'Status' })).toContainText('Execution complete')
   await expect(page.locator('.bottom-panel__status')).toHaveText('Execution complete')
   const transcriptText = await page.locator('.conversation-transcript').innerText()
