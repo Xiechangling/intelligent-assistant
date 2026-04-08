@@ -98,7 +98,7 @@ pre {
   --drawer-width: 0px;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) var(--drawer-width);
-  grid-template-rows: 56px minmax(0, 1fr) auto;
+  grid-template-rows: 48px minmax(0, 1fr) auto;
   grid-template-areas:
     "top top top"
     "left center drawer"
@@ -182,6 +182,44 @@ pre {
   align-items: center;
   gap: 12px;
   padding: 0 14px 0 16px;
+}
+
+/* Simplified toolbar styles (v2.2 lightweight chrome) */
+.toolbar__breadcrumb {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbar__project-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.toolbar__center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
 .toolbar__left-cluster,
