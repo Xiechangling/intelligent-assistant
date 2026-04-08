@@ -1,0 +1,32 @@
+.windowControls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-out;
+}
+
+.button:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.06));
+}
+
+.closeButton {
+  composes: button;
+}
+
+.closeButton:hover {
+  background-color: var(--error-bg, rgba(224, 108, 117, 0.2));
+  color: var(--error-text, #f0a4ab);
+}

@@ -1,0 +1,28 @@
+.navigationButtons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-out;
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.06));
+}
+
+.button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
