@@ -2,7 +2,7 @@ import { expect, test } from 'playwright/test'
 
 const statuses = ['Ready', 'Connecting', 'Connected', 'Attached', 'Working', 'Awaiting approval', 'Review ready', 'Failed'] as const
 
-test('shows canonical status labels in toolbar as exact copy', async ({ page }) => {
+test('shows canonical status labels in session header as exact copy', async ({ page }) => {
   await page.addInitScript(() => {
     ;(window as Window & { __PLAYWRIGHT_SKIP_RECOVERY__?: boolean }).__PLAYWRIGHT_SKIP_RECOVERY__ = true
     ;(window as Window & { __PLAYWRIGHT_MOCKS__?: unknown }).__PLAYWRIGHT_MOCKS__ = {
@@ -61,6 +61,13 @@ test('shows canonical status labels in toolbar as exact copy', async ({ page }) 
     }, status)
 
     const expectedToolbarStatus = status === 'Failed' ? 'Needs attention' : status
-    await expect(page.locator('.workspace__session-header .workspace__status-pill')).toHaveText(expectedToolbarStatus)
+    // Status chip only appears when there's an active session
+    const hasActiveSession = ['Attached', 'Working', 'Awaiting approval', 'Review ready', 'Failed'].includes(status)
+    if (hasActiveSession) {
+      await expect(page.locator('.workspace__session-header .workspace__status-pill')).toHaveText(expectedToolbarStatus)
+    } else {
+      // For statuses without active session (Ready, Connecting, Connected), no status chip is displayed
+      await expect(page.locator('.workspace__session-header')).not.toBeVisible()
+    }
   }
 })
