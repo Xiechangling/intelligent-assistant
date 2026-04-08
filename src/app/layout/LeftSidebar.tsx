@@ -1,6 +1,7 @@
-import { ChevronDown, ChevronRight, Clock3, Folder, FolderOpen, MessageSquare } from 'lucide-react'
+import { Clock3, Folder, FolderOpen, MessageSquare } from 'lucide-react'
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
+import { KeyboardShortcutHint } from '../components/KeyboardShortcutHint'
 
 function formatRelativeTime(timestamp: string) {
   const delta = Date.now() - Number(timestamp)
@@ -57,10 +58,6 @@ export function LeftSidebar() {
     getDesktopWorkflow,
     resumeSession,
     setActiveProject,
-    sidebarProjectsExpanded,
-    sidebarSessionsExpanded,
-    setSidebarProjectsExpanded,
-    setSidebarSessionsExpanded,
   } = useAppShellStore()
 
   const desktopWorkflow = getDesktopWorkflow()
@@ -80,107 +77,96 @@ export function LeftSidebar() {
     }
   }
 
+  // Extract project name from path
+  const projectName = activeProjectPath
+    ? activeProjectPath.split(/[\\/]/).filter(Boolean).pop() || 'Project'
+    : 'No workspace'
+
   return (
     <div className="sidebar">
-      <section className="sidebar__section sidebar__section--brand">
-        <div className="sidebar__brand-mark">
-          <MessageSquare size={15} />
-        </div>
-        <div className="sidebar__brand-copy">
-          <strong>Claude Desktop</strong>
-          <span>{mode === 'project' ? 'Workspace navigation' : 'Conversation navigation'}</span>
-        </div>
+      {/* Project picker at top */}
+      <section className="sidebar__project-picker">
+        <div className="sidebar__project-name">{projectName}</div>
+        <button className="sidebar__project-button" onClick={handleProjectPick}>
+          <FolderOpen size={13} />
+          <span>Open workspace</span>
+          <KeyboardShortcutHint shortcut="ctrl+o" />
+        </button>
       </section>
 
+      {/* Workspaces list - always visible */}
       <section className="sidebar__section">
         <div className="sidebar__section-header">
-          <button className="sidebar__section-toggle" onClick={() => setSidebarProjectsExpanded(!sidebarProjectsExpanded)}>
-            <h2 className="sidebar__title-wrap">
-              {sidebarProjectsExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-              <Folder size={13} />
-              <span className="sidebar__title">Workspaces</span>
-            </h2>
-          </button>
-          <button className="sidebar__link-action" onClick={handleProjectPick}>
-            <FolderOpen size={13} />
-            <span>Open</span>
-          </button>
+          <h2 className="sidebar__title-wrap">
+            <Folder size={13} />
+            <span className="sidebar__title">Workspaces</span>
+          </h2>
         </div>
-        {sidebarProjectsExpanded ? (
-          <>
-            {workspaceProjects.length === 0 ? <p className="sidebar__helper">No workspace selected</p> : null}
-            <ul className="sidebar__list">
-              {workspaceProjects.map((project) => {
-                const isActiveWorkspace = project.path === activeProjectPath && mode === 'project'
-                return (
-                  <li key={`${project.name}-${project.path ?? 'none'}`} className="sidebar__item">
-                    <button
-                      className={`sidebar__row ${isActiveWorkspace ? 'sidebar__row--active' : ''}`}
-                      onClick={() => setActiveProject(project)}
-                      title={project.path ?? project.name}
-                    >
-                      <div className="sidebar__row-head">
-                        <Folder size={13} />
-                        <strong>{project.name}</strong>
-                      </div>
-                      <small>{project.path ?? 'Local workspace'}</small>
-                      {project.warning === 'non-standard' ? <small className="sidebar__warning">Needs attention</small> : null}
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </>
-        ) : null}
+        {workspaceProjects.length === 0 ? <p className="sidebar__helper">No workspace selected</p> : null}
+        <ul className="sidebar__list">
+          {workspaceProjects.map((project) => {
+            const isActiveWorkspace = project.path === activeProjectPath && mode === 'project'
+            return (
+              <li key={`${project.name}-${project.path ?? 'none'}`} className="sidebar__item">
+                <button
+                  className={`sidebar__row ${isActiveWorkspace ? 'sidebar__row--active' : ''}`}
+                  onClick={() => setActiveProject(project)}
+                  title={project.path ?? project.name}
+                >
+                  <div className="sidebar__row-head">
+                    <Folder size={13} />
+                    <strong>{project.name}</strong>
+                  </div>
+                  <small>{project.path ?? 'Local workspace'}</small>
+                  {project.warning === 'non-standard' ? <small className="sidebar__warning">Needs attention</small> : null}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
       </section>
 
+      {/* Recent sessions - always visible */}
       <section className="sidebar__section">
         <div className="sidebar__section-header">
-          <button className="sidebar__section-toggle" onClick={() => setSidebarSessionsExpanded(!sidebarSessionsExpanded)}>
-            <h2 className="sidebar__title-wrap">
-              {sidebarSessionsExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-              <Clock3 size={13} />
-              <span className="sidebar__title">Recent sessions</span>
-            </h2>
-          </button>
+          <h2 className="sidebar__title-wrap">
+            <Clock3 size={13} />
+            <span className="sidebar__title">Recent sessions</span>
+          </h2>
         </div>
-        {sidebarSessionsExpanded ? (
-          <>
-            {sessionHistory.length === 0 ? <p className="sidebar__helper">No recent sessions yet</p> : null}
-            <ul className="sidebar__list">
-              {chooserRows.map((row) => {
-                const isActive = row.sessionId === activeSession?.id
-                const badgeLabel = attentionLabel(row.attention)
-                return (
-                  <li key={row.sessionId} className="sidebar__item">
-                    <button
-                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
-                      onClick={() => resumeSession(row.sessionId)}
-                      title={row.title}
-                    >
-                      <div className="sidebar__row-head sidebar__row-head--spread">
-                        <div className="sidebar__row-head">
-                          <MessageSquare size={13} />
-                          <strong>{row.title}</strong>
-                        </div>
-                        {badgeLabel ? (
-                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(row.attention)}`}>
-                            {badgeLabel}
-                          </span>
-                        ) : null}
-                      </div>
-                      <small>{row.projectName}</small>
-                      <small>{row.summary}</small>
-                      <small>
-                        {formatRelativeTime(row.lastActivityAt)} · {row.workflowStatus}
-                      </small>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </>
-        ) : null}
+        {sessionHistory.length === 0 ? <p className="sidebar__helper">No recent sessions yet</p> : null}
+        <ul className="sidebar__list">
+          {chooserRows.map((row) => {
+            const isActive = row.sessionId === activeSession?.id
+            const badgeLabel = attentionLabel(row.attention)
+            return (
+              <li key={row.sessionId} className="sidebar__item">
+                <button
+                  className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                  onClick={() => resumeSession(row.sessionId)}
+                  title={row.title}
+                >
+                  <div className="sidebar__row-head sidebar__row-head--spread">
+                    <div className="sidebar__row-head">
+                      <MessageSquare size={13} />
+                      <strong>{row.title}</strong>
+                    </div>
+                    {badgeLabel ? (
+                      <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(row.attention)}`}>
+                        {badgeLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                  <small>{row.projectName}</small>
+                  <small>{row.summary}</small>
+                  <small>
+                    {formatRelativeTime(row.lastActivityAt)} · {row.workflowStatus}
+                  </small>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
       </section>
     </div>
   )

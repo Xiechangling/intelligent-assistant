@@ -5,7 +5,6 @@ import { useAppShellStore } from '../state/appShellStore'
 
 export function TopToolbar() {
   const {
-    activeProjectPath,
     globalDefaultModel,
     setGlobalDefaultModel,
     setRightPanelOpen,
@@ -22,18 +21,8 @@ export function TopToolbar() {
     setRightPanelOpen(true)
   }
 
-  // Simplify project name display (only show last path segment)
-  const projectName = activeProjectPath
-    ? activeProjectPath.split(/[\\/]/).filter(Boolean).pop() || 'Project'
-    : 'No workspace'
-
   return (
     <div className="toolbar">
-      {/* Left: Breadcrumb (project name) */}
-      <div className="toolbar__breadcrumb">
-        <span className="toolbar__project-badge">{projectName}</span>
-      </div>
-
       {/* Center: Model selector */}
       <div className="toolbar__center">
         <select
