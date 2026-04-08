@@ -1,35 +1,35 @@
 # Project State
 
 **Last Updated:** 2026-04-08  
-**Current Milestone:** v2.2 官方体验对齐  
-**Milestone Status:** completed
+**Current Milestone:** v2.3 官方 Claude Code Desktop UI 完全复刻  
+**Milestone Status:** defining requirements
 
 ---
 
-## Active Milestone: v2.2
+## Current Position
 
-**Goal:** 将桌面应用从"控制台化"布局全面对齐到官方"内容优先、轻量 chrome"的单流式对话架构
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-08 — Milestone v2.3 started
 
-**Timeline:** 12 days  
-**Progress:** 5/5 phases (100%)  
-**Completed:** 2026-04-08
+---
+
+## Active Milestone: v2.3
+
+**Goal:** 100% 复刻官方 Claude Code Desktop 的视觉、布局、交互和信息架构
+
+**Timeline:** TBD  
+**Progress:** 0/0 phases (0%)  
+**Started:** 2026-04-08
 
 ### Phase Status
 
-| Phase | Status | Progress | Started | Completed |
-|-------|--------|----------|---------|-----------|
-| Phase 1: 顶栏简化与视觉基础 | completed | 2/2 | 2026-04-08 | 2026-04-08 |
-| Phase 2: 中央工作区单流化 | completed | 3/3 | 2026-04-08 | 2026-04-08 |
-| Phase 3: 左侧栏导航化与键盘交互 | completed | 4/4 | 2026-04-08 | 2026-04-08 |
-| Phase 4: 辅助面板抽屉化与组件样式对齐 | completed | 5/5 | 2026-04-08 | 2026-04-08 |
-| Phase 5: 主题系统增强 | completed | 5/5 | 2026-04-08 | 2026-04-08 |
+待创建路线图
 
 ### Requirements Status
 
-**Total:** 15 requirements  
-**Completed:** 15 (all)  
-**In Progress:** 0  
-**Pending:** 0
+待定义
 
 ---
 

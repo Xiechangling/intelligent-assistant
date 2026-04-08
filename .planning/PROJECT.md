@@ -8,40 +8,50 @@ Intelligent Assistant is a shipped Windows-first desktop application that turns 
 
 Make Claude Code-style local coding workflows significantly easier to configure, control, and reuse from a desktop interface without losing the power of project-aware agent execution.
 
-## Current Milestone: v2.2 官方体验对齐
+## Current Milestone: v2.3 官方 Claude Code Desktop UI 完全复刻
 
-**Goal:** 将当前桌面应用的 UI/IA/交互全面对齐到官方 Claude Code Desktop 客户端体验，消除"自制工具感"，达到高拟真度。
+**Goal:** 100% 复刻官方 Claude Code Desktop 的视觉、布局、交互和信息架构，打造高保真的官方体验。
 
 **Target features:**
-- 顶栏去控制台化，改为内容中心的轻量 chrome
-- 左侧栏从状态导航树改为官方风格的项目/会话选择器
-- 中央工作区从多块拼装改为官方单流式对话体验
-- 右侧抽屉和底部托盘收敛为官方风格的轻量辅助面板
-- 整体视觉 token（间距/颜色/字体/圆角/阴影）对齐官方设计系统
-- 交互模式对齐官方行为（hover/focus/transition/快捷键）
+- 极简顶栏：窗口控制 + 前进后退 + Chat/Cowork/Code 三模式标签
+- 左侧栏重构：New session/Search/Customize 顶部操作 + Projects/Sessions 列表
+- 中央区域纯净化：单一对话流 + 底部增强输入框（附件/Auto accept/模型/语音）
+- 空状态设计：大熊猫吉祥物
+- 视觉语言对齐：浅色主题、线性图标、圆角卡片、柔和分隔线
+- 移除额外功能：审批流、审查面板、底部托盘、右侧抽屉
+- 保留核心：主题切换集成到 Customize 菜单
 
-## Previous Milestone
+## Previous Milestones
 
-- **Shipped milestone:** `v2.1.88` on 2026-04-08
-- **Delivery status:** 6 phases complete, 20 plans complete, milestone audit passed
-- **Validation baseline:** startup E2E 5/5, approval E2E 5/5, review E2E 5/5, status E2E 1/1, build passed
-- **Product baseline:** Windows-first, single-user, local-first Claude Code desktop workbench with project/session/approval/review cohesion
+**v2.2 官方体验对齐** (2026-04-08):
+- 5 phases complete, 19 plans complete
+- 15/15 requirements delivered
+- 49/54 E2E tests passing (90.7%)
+- Delivered: 轻量 chrome 顶栏、单流式对话、导航化侧栏、抽屉面板、主题系统、全局快捷键
+
+**v2.1.88 桌面基础** (2026-04-08):
+- 6 phases complete, 20 plans complete, milestone audit passed
+- Validation baseline: startup E2E 5/5, approval E2E 5/5, review E2E 5/5, status E2E 1/1, build passed
+- Product baseline: Windows-first, single-user, local-first Claude Code desktop workbench with project/session/approval/review cohesion
 
 ## Requirements
 
 ### Validated
 
+**v2.2 官方体验对齐:**
+- [x] REQ-01 至 REQ-15: 顶栏简化、单流化、导航化、抽屉面板、主题系统、快捷键等 — validated in v2.2
+
+**v2.1.88 桌面基础:**
 - [x] Local project selection, recent project switching, and active project visibility — validated in v2.1.88
 - [x] Desktop model selection and future-default model switching from the GUI — validated in v2.1.88
 - [x] Durable sessions, recovery, history, and model-aware metadata — validated in v2.1.88
 - [x] Dual-mode assistant interaction with true streaming responses and project-aware task flow — validated in v2.1.88
 - [x] Approval gating, execution visibility, and review-ready desktop workflow — validated in v2.1.88
 - [x] Presets and workflow capability configuration from the GUI — validated in v2.1.88
-- [x] Phase 6 desktop alignment requirements `PH6-01` through `PH6-07` — validated in v2.1.88
 
-### Active
+### Active (v2.3)
 
-- None. Define the next milestone requirements with `/gsd-new-milestone` before reopening active scope.
+待定义 - 将在 REQUIREMENTS.md 中详细列出
 
 ### Out of Scope
 
@@ -81,4 +91,4 @@ This document now reflects a shipped brownfield baseline.
 - Future milestone work should evolve this file by adding new Active requirements and updating Current State after the next shipping cycle.
 
 ---
-*Last updated: 2026-04-08 after v2.1.88 milestone completion*
+*Last updated: 2026-04-08 after v2.3 milestone initialization*
