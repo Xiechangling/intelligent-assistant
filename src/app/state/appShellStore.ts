@@ -67,6 +67,7 @@ interface AppShellState {
   resumeStatus: ResumeStatus
   rightPanelView: RightPanelView
   rightPanelOpen: boolean
+  rightPanelWidth: number
   sidebarSessionsExpanded: boolean
   sidebarProjectsExpanded: boolean
   bottomPanelExpanded: boolean
@@ -95,6 +96,7 @@ interface AppShellState {
   setActiveSessionModelOverride: (model: ModelId | null) => void
   setRightPanelView: (view: RightPanelView) => void
   setRightPanelOpen: (open: boolean) => void
+  setRightPanelWidth: (width: number) => void
   setSidebarSessionsExpanded: (expanded: boolean) => void
   setSidebarProjectsExpanded: (expanded: boolean) => void
   setBottomPanelExpanded: (expanded: boolean) => void
@@ -676,6 +678,9 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   resumeStatus: 'idle',
   rightPanelView: 'context',
   rightPanelOpen: false,
+  rightPanelWidth: (typeof window !== 'undefined' && localStorage.getItem('rightPanelWidth'))
+    ? Math.max(300, Math.min(600, Number(localStorage.getItem('rightPanelWidth'))))
+    : 400,
   sidebarSessionsExpanded: true,
   sidebarProjectsExpanded: true,
   bottomPanelExpanded: false,
@@ -757,6 +762,13 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   setActiveSessionModelOverride: (activeSessionModelOverride) => set({ activeSessionModelOverride }),
   setRightPanelView: (rightPanelView) => set({ rightPanelView, rightPanelOpen: true }),
   setRightPanelOpen: (rightPanelOpen) => set({ rightPanelOpen }),
+  setRightPanelWidth: (width) => {
+    const clampedWidth = Math.max(300, Math.min(600, width));
+    set({ rightPanelWidth: clampedWidth });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rightPanelWidth', String(clampedWidth));
+    }
+  },
   setSidebarSessionsExpanded: (sidebarSessionsExpanded) => set({ sidebarSessionsExpanded }),
   setSidebarProjectsExpanded: (sidebarProjectsExpanded) => set({ sidebarProjectsExpanded }),
   setBottomPanelExpanded: (bottomPanelExpanded) => set({ bottomPanelExpanded }),
