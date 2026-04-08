@@ -161,20 +161,23 @@
 **Goal:** 多主题切换是增强功能，提升可访问性
 
 **Requirements:**
-- REQ-12: 多主题切换（dark/light/daltonized）
+- REQ-09: 主题系统增强（light/dark/auto 三种模式，系统主题跟随，主题切换动画）
 
-**Deliverables:**
-- [ ] dark/light/daltonized 三种主题
-- [ ] 主题持久化（localStorage）
-- [ ] 主题切换 UI（设置面板）
-- [ ] 主题切换无闪烁（CSS 变量过渡）
-- [ ] 主题切换 E2E 测试
+**Plans:** 5 plans
+- [ ] 05-01-PLAN.md — 核心主题系统（状态管理、CSS 变量、系统检测）
+- [ ] 05-02-PLAN.md — 主题选择器 UI（设置面板 Appearance 组）
+- [ ] 05-03-PLAN.md — 主题切换 E2E 测试
+- [ ] 05-04-PLAN.md — 修复剩余 E2E 测试失败
+- [ ] 05-05-PLAN.md — 最终里程碑验证
 
 **Success Criteria:**
-- 支持 3 种主题切换
-- 主题持久化工作
-- 主题切换无闪烁
-- E2E 测试通过
+- 支持 3 种主题切换（light/dark/auto）
+- 主题持久化工作（localStorage）
+- Auto 模式跟随系统主题（prefers-color-scheme）
+- 主题切换无闪烁（200ms 平滑过渡）
+- 主题选择器在设置面板 Appearance 组
+- E2E 测试通过（54 tests, 100% pass rate）
+- 所有 15 个 v2.2 需求完成验证
 
 **Dependencies:** 无（可随时实施）
 
