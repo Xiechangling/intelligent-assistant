@@ -11,14 +11,14 @@
 **Goal:** 将桌面应用从"控制台化"布局全面对齐到官方"内容优先、轻量 chrome"的单流式对话架构
 
 **Timeline:** 12-17 days  
-**Progress:** 1/5 phases (20%)
+**Progress:** 2/5 phases (40%)
 
 ### Phase Status
 
 | Phase | Status | Progress | Started | Completed |
 |-------|--------|----------|---------|-----------|
 | Phase 1: 顶栏简化与视觉基础 | completed | 2/2 | 2026-04-08 | 2026-04-08 |
-| Phase 2: 中央工作区单流化 | pending | 0/8 | - | - |
+| Phase 2: 中央工作区单流化 | completed | 3/3 | 2026-04-08 | 2026-04-08 |
 | Phase 3: 左侧栏导航化与键盘交互 | pending | 0/7 | - | - |
 | Phase 4: 辅助面板抽屉化与组件样式对齐 | pending | 0/7 | - | - |
 | Phase 5: 主题系统增强 | pending | 0/5 | - | - |
@@ -53,8 +53,11 @@
 **Test Status:** ✓ all E2E tests passing (startup 5/5, approval 5/5, review 5/5, status 1/1)
 
 **Uncommitted Changes:**
-- ?? .planning/phases/01-topbar-visual-foundation/01-01-SUMMARY.md (Phase 1 Plan 1 完成)
-- ?? .planning/phases/01-topbar-visual-foundation/01-02-SUMMARY.md (Phase 1 Plan 2 完成)
+- M .planning/STATE.md (Phase 2 完成状态更新)
+- ?? .planning/phases/02-center-workspace-single-stream/02-01-SUMMARY.md (Phase 2 Plan 1 完成)
+- ?? .planning/phases/02-center-workspace-single-stream/02-02-SUMMARY.md (Phase 2 Plan 2 完成)
+- ?? .planning/phases/02-center-workspace-single-stream/02-03-SUMMARY.md (Phase 2 Plan 3 完成)
+- ?? .planning/phases/02-center-workspace-single-stream/deferred-items.md (Phase 2 延期项)
 
 ---
 
@@ -73,32 +76,50 @@
 - Context and Settings merged into single settings button
 - Breadcrumb shows only last path segment with 200px max-width
 
+### Phase 2 Decisions
+
+**Inline Card Tray Linkage (Plan 02-01):**
+- Use zustand store methods (setBottomPanelExpanded, setBottomPanelTab) for state management
+- Add visual expand hints (ChevronDown icon + text) to guide user interaction
+- Different click behaviors per card type (approval auto-shows, status/review switch tabs)
+
+**Session Header Simplification (Plan 02-02):**
+- Remove metadata grid (workspace, model, last activity, session state) to reduce visual clutter
+- Move StatusChip to header right side for prominent visibility
+- Keep eyebrow, title, and activity summary for essential context
+- Use flexbox single-row layout for cleaner structure
+
+**E2E Test Updates (Plan 02-03):**
+- Update all status chip selectors to match new header location
+- Update inline card selectors to match new component structure
+- Fix text expectations to match actual component output
+- Defer Phase 1 mode switcher test to out-of-scope
+
 ---
 
 ## Next Steps
 
-1. **Phase 2 Planning:** 创建 Phase 2 详细计划（中央工作区单流化）
-2. **Phase 2 Execution:** 执行 Phase 2 计划
-3. **Update Tests:** 更新 approval-flow 和 status-system 测试以反映状态芯片移至 session header
-4. **Phase 2 Verification:** 验证 Phase 2 交付物
+1. **Phase 3 Planning:** 创建 Phase 3 详细计划（左侧栏导航化与键盘交互）
+2. **Phase 3 Execution:** 执行 Phase 3 计划
+3. **Resolve Deferred Item:** 决定是否保留/移除/重新实现模式切换功能
+4. **Phase 3 Verification:** 验证 Phase 3 交付物
 
 ---
 
 ## Known Issues
 
-**Test Failures (Expected):**
-- 3 E2E tests failing (approval-flow x2, status-system x1) due to removed `.toolbar__status-chip`
-- These tests will be updated in Phase 2 when status chip moves to session header
-- Startup tests (5/5) and build remain passing
+**Deferred from Phase 2:**
+- 1 E2E test failing: "blocks mode switching while approval is pending" (approval-flow.spec.ts:71)
+- Test expects Project/Conversation mode switcher buttons removed in Phase 1
+- Documented in `.planning/phases/02-center-workspace-single-stream/deferred-items.md`
+- Requires decision: remove test, update test, or re-implement mode switching
+- Current pass rate: 21/22 (95.5%)
 
 ---
 
 ## Blockers
 
-**Test Updates Required for Phase 2:**
-- approval-flow.spec.ts expects `.toolbar__status-chip` (removed in Phase 1)
-- status-system.spec.ts expects `.toolbar__status-chip` (removed in Phase 1)
-- Tests will be updated when status chip moves to session header in Phase 2
+None - Phase 2 complete, ready for Phase 3 planning.
 
 ---
 
@@ -108,18 +129,25 @@
 |-------|------|----------|-------|-------|-----------|
 | 01 | 01 | 5min | 4 | 2 | 2026-04-08T12:30:00Z |
 | 01 | 02 | 8min | 3 | 2 | 2026-04-08T12:38:00Z |
+| 02 | 01 | 15min | 3 | 2 | 2026-04-08T20:45:00Z |
+| 02 | 02 | 10min | 2 | 2 | 2026-04-08T20:50:00Z |
+| 02 | 03 | 25min | 4 | 3 | 2026-04-08T21:00:00Z |
 
 ---
 
 ## Notes
 
 - v2.2 Phase 1 完成（视觉基础设施 + 轻量 chrome 顶栏）
+- v2.2 Phase 2 完成（中央工作区单流化 + 内联卡片交互）
 - 4 个官方颜色 token 已添加
 - 间距系统统一为 8px 基数
 - Focus ring 增强（outline 替代 box-shadow）
 - KeyboardShortcutHint 组件已创建
 - 顶栏简化为 3 元素布局（48px 高度）
-- 准备进入 Phase 2 规划阶段
+- Session header 简化为单行布局（移除 metadata grid）
+- 内联卡片可点击展开底部托盘（带视觉提示）
+- E2E 测试更新完成（21/22 通过，95.5% 通过率）
+- 准备进入 Phase 3 规划阶段
 
 ---
 
