@@ -49,10 +49,21 @@ type ResumeStatus = 'idle' | 'loading'
 type AssistantStatus = 'idle' | 'streaming' | 'error'
 type BottomPanelTab = 'output' | 'review'
 type ThemeMode = 'light' | 'dark' | 'auto'
+type Mode = 'chat' | 'search' | 'navigate'
+
+interface Attachment {
+  id: string
+  path: string
+  name: string
+  type: 'file' | 'image'
+}
 
 interface AppShellState {
   mode: AppMode
   theme: ThemeMode
+  currentMode: Mode
+  voiceInputActive: boolean
+  attachments: Attachment[]
   activeProjectPath: string | null
   recentProjects: ProjectRecord[]
   activeShellView: ShellView
@@ -92,6 +103,11 @@ interface AppShellState {
   macOSOptionMappingEnabled: boolean
   setTheme: (theme: ThemeMode) => void
   setMode: (mode: AppMode) => void
+  setCurrentMode: (mode: Mode) => void
+  toggleVoiceInput: () => void
+  addAttachment: (file: Attachment) => void
+  removeAttachment: (id: string) => void
+  clearAttachments: () => void
   setActiveProject: (project: ProjectRecord | null) => void
   setRecentProjects: (projects: ProjectRecord[]) => void
   setShellView: (view: ShellView) => void
@@ -666,6 +682,9 @@ function parseInputSegments(prompt: string) {
 export const useAppShellStore = create<AppShellState>((set, get) => ({
   mode: 'conversation',
   theme: (typeof window !== 'undefined' && localStorage.getItem('theme') as ThemeMode) || 'dark',
+  currentMode: 'chat',
+  voiceInputActive: false,
+  attachments: [],
   activeProjectPath: null,
   recentProjects: [defaultProject],
   activeShellView: 'conversation-home',
@@ -733,6 +752,11 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
         rightPanelOpen: mode === 'conversation' ? false : state.rightPanelOpen,
       }
     }),
+  setCurrentMode: (mode) => set({ currentMode: mode }),
+  toggleVoiceInput: () => set((state) => ({ voiceInputActive: !state.voiceInputActive })),
+  addAttachment: (file) => set((state) => ({ attachments: [...state.attachments, file] })),
+  removeAttachment: (id) => set((state) => ({ attachments: state.attachments.filter((a) => a.id !== id) })),
+  clearAttachments: () => set({ attachments: [] }),
   setActiveProject: (project) =>
     set((state) => {
       if (!project) {
