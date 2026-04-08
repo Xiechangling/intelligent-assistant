@@ -2590,3 +2590,47 @@ select:hover {
 .keyboard-hint__action {
   opacity: 0.8;
 }
+
+/* Search box styles */
+.right-panel__search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  transition: all 120ms ease;
+}
+
+.right-panel__search-box:focus-within {
+  border-color: var(--accent);
+  background: var(--bg-panel);
+}
+
+.right-panel__search-box svg {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.right-panel__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  padding: 0;
+  height: auto;
+}
+
+.right-panel__search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.right-panel__settings-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}

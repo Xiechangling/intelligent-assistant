@@ -1,5 +1,6 @@
-import { Check, FileText, Settings, X } from 'lucide-react'
+import { Check, FileText, Settings, X, Search } from 'lucide-react'
 import { FormEvent, useEffect, useState } from 'react'
+import { KeyboardShortcutHint } from '../components/KeyboardShortcutHint'
 import {
   clearAssistantConnectionSettings,
   clearCredential,
@@ -89,6 +90,7 @@ export function RightPanel() {
   const [credentialMessage, setCredentialMessage] = useState<string | null>(null)
   const [credentialBusy, setCredentialBusy] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (rightPanelView === 'settings') {
@@ -260,13 +262,27 @@ export function RightPanel() {
         ) : (
           <>
             <div className="right-panel__section">
-              <div className="right-panel__settings-header">
-                <div>
-                  <h2 className="right-panel__heading">Connection settings</h2>
-                  <p className="right-panel__section-copy">Manage local credentials and the optional API endpoint override.</p>
-                </div>
-                <span className="right-panel__helper">{formatCredentialState(credentialStatus)}</span>
+              <div className="right-panel__search-box">
+                <Search size={14} />
+                <input
+                  type="text"
+                  placeholder="Search settings..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="right-panel__search-input"
+                />
               </div>
+            </div>
+
+            {(!searchQuery || 'connection settings api key base url credentials'.includes(searchQuery.toLowerCase())) && (
+              <div className="right-panel__section">
+                <div className="right-panel__settings-header">
+                  <div>
+                    <h2 className="right-panel__heading">Connection settings</h2>
+                    <p className="right-panel__section-copy">Manage local credentials and the optional API endpoint override.</p>
+                  </div>
+                  <span className="right-panel__helper">{formatCredentialState(credentialStatus)}</span>
+                </div>
               <form className="right-panel__credential-form" onSubmit={handleCredentialSubmit}>
                 <div className="right-panel__input-group">
                   <label className="right-panel__input-label">API key</label>
@@ -308,7 +324,9 @@ export function RightPanel() {
                 {credentialMessage ? <p className="right-panel__helper">{credentialMessage}</p> : null}
               </form>
             </div>
+            )}
 
+            {(!searchQuery || 'presets defaults model mode'.includes(searchQuery.toLowerCase())) && (
             <div className="right-panel__section">
               <div className="right-panel__settings-header">
                 <div>
@@ -346,7 +364,9 @@ export function RightPanel() {
                 })}
               </div>
             </div>
+            )}
 
+            {(!searchQuery || 'keyboard shortcuts keybindings ctrl macos option'.includes(searchQuery.toLowerCase())) && (
             <div className="right-panel__section">
               <div className="right-panel__settings-header">
                 <div>
@@ -364,7 +384,9 @@ export function RightPanel() {
                     <small>{keybindingsEnabled ? 'On' : 'Off'}</small>
                   </div>
                   <div className="right-panel__settings-item-meta">
-                    <span>ctrl+t: New session · ctrl+o: Open project · ctrl+e: Settings</span>
+                    <KeyboardShortcutHint shortcut="ctrl+t" action="New session" />
+                    <KeyboardShortcutHint shortcut="ctrl+o" action="Open project" />
+                    <KeyboardShortcutHint shortcut="ctrl+e" action="Settings" />
                   </div>
                 </button>
                 {keybindingsEnabled && (
@@ -377,13 +399,17 @@ export function RightPanel() {
                       <small>{macOSOptionMappingEnabled ? 'On' : 'Off'}</small>
                     </div>
                     <div className="right-panel__settings-item-meta">
-                      <span>Option+t (†), Option+o (ø), Option+e (´) also work on macOS</span>
+                      <KeyboardShortcutHint shortcut="alt+t" action="New session" />
+                      <KeyboardShortcutHint shortcut="alt+o" action="Open project" />
+                      <KeyboardShortcutHint shortcut="alt+e" action="Settings" />
                     </div>
                   </button>
                 )}
               </div>
             </div>
+            )}
 
+            {(!searchQuery || 'workflow capabilities skills'.includes(searchQuery.toLowerCase())) && (
             <div className="right-panel__section">
               <div className="right-panel__settings-header">
                 <div>
@@ -408,6 +434,7 @@ export function RightPanel() {
                 ))}
               </div>
             </div>
+            )}
           </>
         )}
       </div>
