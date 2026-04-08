@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   ArrowRight,
   ArrowUpRight,
+  ChevronDown,
   FileImage,
   FilePlus2,
   FileText,
@@ -493,6 +494,10 @@ function InlineApprovalSummary({
       <p className="workspace__inline-copy">
         Review the command details in the bottom panel, then approve or reject the command for this workspace.
       </p>
+      <div className="workspace__inline-expand-hint">
+        <ChevronDown size={14} />
+        <span>Click to view full approval details in tray</span>
+      </div>
       <div className="approval-card__actions" onClick={(e) => e.stopPropagation()}>
         <button className="workspace__secondary-action" onClick={() => onReject().catch(() => undefined)}>
           Reject command
@@ -563,6 +568,12 @@ function InlineWorkflowStatusSummary() {
         <StatusChip status={statusLabel as DesktopWorkflowStatus} />
       </div>
       <p className="workspace__inline-copy">{helperCopy}</p>
+      {isClickable && (
+        <div className="workspace__inline-expand-hint">
+          <ChevronDown size={14} />
+          <span>Click to view execution output in tray</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -593,6 +604,10 @@ function InlineReviewSummary() {
         <StatusChip status="Review ready" />
       </div>
       <p className="workspace__inline-copy">Open review in the bottom panel to inspect changed files and continue the session.</p>
+      <div className="workspace__inline-expand-hint">
+        <ChevronDown size={14} />
+        <span>Click file to open review in tray</span>
+      </div>
       <div className="review-summary-card__list review-summary-card__list--inline">
         {executionRecord.changedFiles.map((file) => (
           <button key={file.id} className="review-summary-card__file" onClick={() => handleFileClick(file.id)}>
