@@ -48,9 +48,11 @@ type RecoveryStatus = 'idle' | 'recovering' | 'restored' | 'error'
 type ResumeStatus = 'idle' | 'loading'
 type AssistantStatus = 'idle' | 'streaming' | 'error'
 type BottomPanelTab = 'output' | 'review'
+type ThemeMode = 'light' | 'dark' | 'auto'
 
 interface AppShellState {
   mode: AppMode
+  theme: ThemeMode
   activeProjectPath: string | null
   recentProjects: ProjectRecord[]
   activeShellView: ShellView
@@ -88,6 +90,7 @@ interface AppShellState {
   skillToggles: SkillToggle[]
   keybindingsEnabled: boolean
   macOSOptionMappingEnabled: boolean
+  setTheme: (theme: ThemeMode) => void
   setMode: (mode: AppMode) => void
   setActiveProject: (project: ProjectRecord | null) => void
   setRecentProjects: (projects: ProjectRecord[]) => void
@@ -662,6 +665,7 @@ function parseInputSegments(prompt: string) {
 
 export const useAppShellStore = create<AppShellState>((set, get) => ({
   mode: 'conversation',
+  theme: (typeof window !== 'undefined' && localStorage.getItem('theme') as ThemeMode) || 'dark',
   activeProjectPath: null,
   recentProjects: [defaultProject],
   activeShellView: 'conversation-home',
@@ -701,6 +705,12 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   skillToggles: defaultSkillToggles,
   keybindingsEnabled: true,
   macOSOptionMappingEnabled: true,
+  setTheme: (theme) => {
+    set({ theme });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', theme);
+    }
+  },
   setMode: (mode) =>
     set((state) => {
       if (state.pendingProposal && mode !== state.mode) {

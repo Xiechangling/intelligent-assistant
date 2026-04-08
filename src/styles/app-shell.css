@@ -40,6 +40,35 @@
   --space-6: 32px;
 }
 
+[data-theme='light'] {
+  color-scheme: light;
+  --bg-app: #f5f7fa;
+  --bg-shell: #ffffff;
+  --bg-sidebar: #fafbfc;
+  --bg-canvas: #ffffff;
+  --bg-panel: #f8f9fb;
+  --bg-elevated: #ffffff;
+  --bg-muted: #f0f2f5;
+  --bg-soft: #fafbfc;
+  --bg-accent-soft: rgba(120, 142, 255, 0.08);
+  --bg-accent-deep: rgba(94, 112, 220, 0.12);
+  --bg-surface-warm: rgba(0, 0, 0, 0.02);
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(120, 142, 255, 0.3);
+  --border-highlight: rgba(0, 0, 0, 0.12);
+  --text-primary: #1a1d24;
+  --text-secondary: #4a5568;
+  --text-tertiary: #718096;
+  --accent: #5b7cff;
+  --accent-strong: #4a68e6;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --color-permission: #6b7ff9;
+  --color-inactive: #9ca3af;
+  --color-subtle: #d1d5db;
+  --color-success: #10b981;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -58,6 +87,7 @@ body {
     linear-gradient(180deg, #151922 0%, #0f1116 100%);
   color: var(--text-primary);
   overflow: hidden;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 button,
