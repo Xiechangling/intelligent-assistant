@@ -1,25 +1,46 @@
 import { create } from 'zustand'
+import { openFileAttachments, openImageAttachments } from '../services/attachmentService'
 import { runApprovedCommand, streamAssistantResponse } from '../services/assistantService'
-import { createSession, listSessions, loadRecoverySnapshot, loadSession, saveRecoverySnapshot, updateSessionActivity } from '../services/sessionService'
+import {
+  createSession,
+  listSessions,
+  loadRecoverySnapshot,
+  loadSession,
+  saveRecoverySnapshot,
+  updateSessionActivity,
+} from '../services/sessionService'
 import type {
   AppMode,
   ApprovalDecision,
   ChangedFileReview,
   CommandProposal,
   CredentialStatusSummary,
+  DesktopChooserRow,
+  DesktopChooserViewModel,
+  DesktopRecoveryViewModel,
+  DesktopSessionAttention,
+  DesktopSessionHeader,
+  DesktopStartupState,
+  DesktopTrayMode,
+  DesktopWorkflowStatus,
+  DesktopWorkflowViewModel,
   ExecutionOutputEntry,
   ExecutionRecord,
+  ExecutionReviewState,
   ExecutionStatus,
   ModelId,
   ProjectRecord,
   ReviewPreset,
   RightPanelView,
+  SessionAttachment,
   SessionDetail,
   SessionHistoryFilter,
   SessionRecord,
+  SessionRecoverySnapshot,
   SessionTranscriptEvent,
   ShellView,
   SkillToggle,
+  WorkspaceSummaryViewModel,
 } from './types'
 
 type SessionHistoryStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -42,14 +63,18 @@ interface AppShellState {
   sessionHistoryError: string | null
   recoveryStatus: RecoveryStatus
   recoveryMessage: string | null
+  lastRecoverySnapshot: SessionRecoverySnapshot | null
   resumeStatus: ResumeStatus
   rightPanelView: RightPanelView
   rightPanelOpen: boolean
+  sidebarSessionsExpanded: boolean
+  sidebarProjectsExpanded: boolean
   bottomPanelExpanded: boolean
   bottomPanelTab: BottomPanelTab
   credentialStatus: CredentialStatusSummary
   projectWarning: string | null
   draftPrompt: string
+  pendingAttachments: SessionAttachment[]
   assistantStatus: AssistantStatus
   assistantError: string | null
   currentStageLabel: string | null
@@ -68,10 +93,15 @@ interface AppShellState {
   setActiveSessionModelOverride: (model: ModelId | null) => void
   setRightPanelView: (view: RightPanelView) => void
   setRightPanelOpen: (open: boolean) => void
+  setSidebarSessionsExpanded: (expanded: boolean) => void
+  setSidebarProjectsExpanded: (expanded: boolean) => void
   setBottomPanelExpanded: (expanded: boolean) => void
   setBottomPanelTab: (tab: BottomPanelTab) => void
   setCredentialStatus: (status: CredentialStatusSummary) => void
   setDraftPrompt: (prompt: string) => void
+  addFileAttachments: () => Promise<void>
+  addImageAttachments: () => Promise<void>
+  removePendingAttachment: (attachmentId: string) => void
   selectReviewFile: (fileId: string) => void
   savePreset: (name: string) => void
   applyPreset: (presetId: string) => void
@@ -86,6 +116,11 @@ interface AppShellState {
   submitPrompt: () => Promise<void>
   approvePendingCommand: () => Promise<void>
   rejectPendingCommand: () => Promise<void>
+  getDesktopWorkflow: () => DesktopWorkflowViewModel
+  getDesktopStatus: () => DesktopWorkflowStatus
+  getDesktopTrayMode: () => DesktopTrayMode
+  getChooserView: () => DesktopChooserViewModel
+  getActiveSessionHeader: () => DesktopSessionHeader | null
 }
 
 const defaultProject: ProjectRecord = {
@@ -95,9 +130,24 @@ const defaultProject: ProjectRecord = {
 }
 
 const defaultSkillToggles: SkillToggle[] = [
-  { id: 'project-analysis', label: 'Project analysis', enabled: true },
-  { id: 'safe-execution', label: 'Safe execution', enabled: true },
-  { id: 'review-surfaces', label: 'Review surfaces', enabled: true },
+  {
+    id: 'command-approval',
+    label: 'Command approval',
+    description: 'Ask before impactful commands run.',
+    enabled: true,
+  },
+  {
+    id: 'change-review',
+    label: 'Change review',
+    description: 'Keep changed files ready in the review tray.',
+    enabled: true,
+  },
+  {
+    id: 'workspace-context',
+    label: 'Workspace context',
+    description: 'Keep project context available during work.',
+    enabled: true,
+  },
 ]
 
 function deriveProjectName(projectPath: string | null, recentProjects: ProjectRecord[]) {
@@ -118,7 +168,7 @@ function createEvent(event: Omit<SessionTranscriptEvent, 'id' | 'createdAt'>): S
 
 function createAssistantActivity(summary: string) {
   return {
-    label: 'Assistant active',
+    label: 'Working',
     summary,
     at: now(),
   }
@@ -133,6 +183,18 @@ function createExecutionOutput(stream: ExecutionOutputEntry['stream'], text: str
   }
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message
+  }
+
+  if (typeof error === 'string' && error.trim()) {
+    return error
+  }
+
+  return fallback
+}
+
 function buildExecutionRecord(proposal: CommandProposal): ExecutionRecord {
   return {
     id: `execution-${crypto.randomUUID()}`,
@@ -142,6 +204,8 @@ function buildExecutionRecord(proposal: CommandProposal): ExecutionRecord {
     projectPath: proposal.projectPath,
     workingDirectory: proposal.workingDirectory,
     status: 'awaiting-approval',
+    reviewState: 'pending',
+    reviewUnavailableMessage: null,
     output: [],
     changedFiles: [],
     startedAt: null,
@@ -149,9 +213,46 @@ function buildExecutionRecord(proposal: CommandProposal): ExecutionRecord {
   }
 }
 
-async function rehydrateSession(sessionId: string) {
-  const session = await loadSession(sessionId)
-  await saveRecoverySnapshot({
+function deriveReviewUnavailableMessage(output: ExecutionOutputEntry[]) {
+  return output.find((entry) => entry.stream === 'system' && /review unavailable/i.test(entry.text))?.text ?? null
+}
+
+function deriveExecutionReviewState(execution: Pick<ExecutionRecord, 'status' | 'changedFiles' | 'reviewUnavailableMessage'>): ExecutionReviewState {
+  if (execution.status !== 'completed') {
+    return 'pending'
+  }
+
+  if (execution.changedFiles.length > 0) {
+    return 'ready'
+  }
+
+  if (execution.reviewUnavailableMessage) {
+    return 'unavailable'
+  }
+
+  return 'empty'
+}
+
+function syncReviewSelection(previousExecution: ExecutionRecord | null, nextExecution: ExecutionRecord, selectedReviewFileId: string | null) {
+  if (nextExecution.reviewState !== 'ready') {
+    return null
+  }
+
+  const didExecutionChange = previousExecution?.id !== nextExecution.id
+  if (didExecutionChange) {
+    return nextExecution.changedFiles[0]?.id ?? null
+  }
+
+  const stillExists = nextExecution.changedFiles.some((file) => file.id === selectedReviewFileId)
+  if (stillExists) {
+    return selectedReviewFileId
+  }
+
+  return nextExecution.changedFiles[0]?.id ?? null
+}
+
+async function persistRecoverySnapshot(session: SessionDetail) {
+  const snapshot: SessionRecoverySnapshot = {
     sessionId: session.id,
     projectPath: session.projectPath,
     projectName: session.projectName,
@@ -159,8 +260,15 @@ async function rehydrateSession(sessionId: string) {
     restoredAt: now(),
     lastActivityAt: session.lastActivityAt,
     recentActivity: session.recentActivity,
-  })
-  return session
+  }
+  await saveRecoverySnapshot(snapshot)
+  return snapshot
+}
+
+async function rehydrateSession(sessionId: string) {
+  const session = await loadSession(sessionId)
+  const snapshot = await persistRecoverySnapshot(session)
+  return { session, snapshot }
 }
 
 async function persistSession(session: SessionDetail) {
@@ -173,6 +281,25 @@ async function persistSession(session: SessionDetail) {
   })
 }
 
+function createStreamingSessionPersister(sessionId: string) {
+  let lastPersistAt = 0
+
+  return async (session: SessionDetail, force = false) => {
+    const nowMs = Date.now()
+    if (!force && nowMs - lastPersistAt < 350) {
+      return session
+    }
+    lastPersistAt = nowMs
+    return updateSessionActivity(sessionId, {
+      status: session.status,
+      effectiveModelId: session.effectiveModelId,
+      title: session.title,
+      recentActivity: session.recentActivity,
+      transcript: session.transcript,
+    })
+  }
+}
+
 function ensureConversationSession(state: AppShellState) {
   if (state.activeSession) {
     return state.activeSession
@@ -181,7 +308,11 @@ function ensureConversationSession(state: AppShellState) {
   return null
 }
 
-function appendApprovalResolution(transcript: SessionTranscriptEvent[], decision: ApprovalDecision, proposal: CommandProposal) {
+function appendApprovalResolution(
+  transcript: SessionTranscriptEvent[],
+  decision: ApprovalDecision,
+  proposal: CommandProposal,
+) {
   return [
     ...transcript,
     createEvent({
@@ -193,7 +324,12 @@ function appendApprovalResolution(transcript: SessionTranscriptEvent[], decision
   ]
 }
 
-function appendExecutionUpdate(transcript: SessionTranscriptEvent[], body: string, status: ExecutionStatus, proposal?: CommandProposal) {
+function appendExecutionUpdate(
+  transcript: SessionTranscriptEvent[],
+  body: string,
+  status: ExecutionStatus,
+  proposal?: CommandProposal,
+) {
   return [
     ...transcript,
     createEvent({
@@ -215,11 +351,314 @@ function appendReviewAvailable(transcript: SessionTranscriptEvent[], count: numb
   ]
 }
 
+function buildExecutionOutcomeSummary(output: ExecutionOutputEntry[], fallback: string) {
+  const preferredLine = [...output]
+    .reverse()
+    .find((entry) => entry.text.trim() && (entry.stream === 'stderr' || entry.stream === 'system'))
+
+  return preferredLine?.text.trim() || fallback
+}
+
+function deriveSessionAttention(
+  session: Pick<SessionRecord, 'status' | 'recentActivity'>,
+  hasReviewReady = false,
+): DesktopSessionAttention {
+  const summary = session.recentActivity?.summary?.toLowerCase() ?? ''
+  const label = session.recentActivity?.label?.toLowerCase() ?? ''
+
+  if (hasReviewReady || summary.includes('review ready') || summary.includes('review artifacts')) {
+    return 'review'
+  }
+
+  if (summary.includes('approval') || label.includes('approval')) {
+    return 'approval'
+  }
+
+  if (session.status === 'needs-attention' || label.includes('failed') || summary.includes('failed')) {
+    return 'failure'
+  }
+
+  return null
+}
+
+function deriveSessionWorkflowStatus(
+  session: Pick<SessionRecord, 'status' | 'recentActivity'>,
+  options?: {
+    isActive?: boolean
+    attention?: DesktopSessionAttention
+    isWorking?: boolean
+    isConnected?: boolean
+  },
+): DesktopWorkflowStatus {
+  if (options?.isWorking) {
+    return 'Working'
+  }
+
+  if (options?.attention === 'approval') {
+    return 'Awaiting approval'
+  }
+
+  if (options?.attention === 'review') {
+    return 'Review ready'
+  }
+
+  if (options?.attention === 'failure') {
+    return session.status === 'needs-attention' ? 'Needs attention' : 'Failed'
+  }
+
+  if (session.status === 'needs-attention') {
+    return 'Needs attention'
+  }
+
+  if (options?.isActive) {
+    return 'Attached'
+  }
+
+  if (session.status === 'complete') {
+    return 'Connected'
+  }
+
+  if (options?.isConnected) {
+    return 'Connected'
+  }
+
+  return 'Ready'
+}
+
+function buildWorkspaceSummary(state: AppShellState): WorkspaceSummaryViewModel | null {
+  const project = state.recentProjects.find((entry) => entry.path === state.activeProjectPath)
+  if (!project?.path) {
+    return null
+  }
+
+  const sessionCount = state.sessionHistory.filter((entry) => entry.projectPath === project.path).length
+  let summary =
+    sessionCount === 0 ? 'No sessions yet for this workspace.' : `${sessionCount} recent session${sessionCount === 1 ? '' : 's'} available.`
+
+  if (state.projectWarning) {
+    summary = state.projectWarning
+  }
+
+  return {
+    projectName: project.name,
+    projectPath: project.path,
+    warning: project.warning,
+    sessionCount,
+    workflowStatus: state.activeSession ? 'Attached' : 'Connected',
+    summary,
+  }
+}
+
+function buildChooserRows(state: AppShellState): DesktopChooserRow[] {
+  const recoverySessionId = state.lastRecoverySnapshot?.sessionId ?? null
+
+  return state.sessionHistory
+    .filter((session) => state.mode === 'conversation' || !state.activeProjectPath || session.projectPath === state.activeProjectPath)
+    .map((session) => {
+      const isConversation = session.projectPath === '__conversation__'
+      const isActive = state.activeSession?.id === session.id
+      const isRecoveryTarget = recoverySessionId === session.id
+      const attention = deriveSessionAttention(session, state.executionRecord?.reviewState === 'ready' ? isActive : false)
+
+      return {
+        sessionId: session.id,
+        title: session.title,
+        projectName: session.projectName,
+        projectPath: session.projectPath,
+        modelId: session.effectiveModelId,
+        lastActivityAt: session.lastActivityAt,
+        workflowStatus: deriveSessionWorkflowStatus(session, {
+          isActive,
+          attention,
+          isWorking: isActive && (state.assistantStatus === 'streaming' || state.executionRecord?.status === 'running'),
+          isConnected: !isActive,
+        }),
+        attention,
+        summary: session.recentActivity?.summary ?? 'Ready to continue work',
+        primaryAction: isRecoveryTarget ? 'attach' : isConversation ? 'resume' : 'resume',
+        isActive,
+        isSpotlight: isRecoveryTarget || isActive,
+        isRecoveryTarget,
+      }
+    })
+}
+
+function deriveStartupState(state: AppShellState): DesktopStartupState {
+  if (state.activeSession) {
+    return 'active-session'
+  }
+
+  if (state.recoveryStatus === 'error') {
+    return 'recovery-failed'
+  }
+
+  if (state.lastRecoverySnapshot) {
+    return 'recovery-available'
+  }
+
+  if (!state.activeProjectPath && state.mode === 'project') {
+    return 'no-workspace'
+  }
+
+  return 'chooser-ready'
+}
+
+function deriveTrayMode(state: AppShellState): DesktopTrayMode {
+  if (state.pendingProposal) {
+    return 'approval'
+  }
+
+  if (state.executionRecord?.reviewState === 'ready') {
+    return 'review'
+  }
+
+  if (state.executionRecord || state.assistantStatus === 'streaming' || state.assistantError) {
+    return 'output'
+  }
+
+  return 'collapsed'
+}
+
+function deriveDesktopStatus(state: AppShellState): DesktopWorkflowStatus {
+  if (state.recoveryStatus === 'recovering' || state.resumeStatus === 'loading' || state.sessionHistoryStatus === 'loading') {
+    return 'Connecting'
+  }
+
+  if (state.pendingProposal) {
+    return 'Awaiting approval'
+  }
+
+  if (state.assistantError || state.executionRecord?.status === 'failed') {
+    return state.activeSession?.status === 'needs-attention' ? 'Needs attention' : 'Failed'
+  }
+
+  if (state.executionRecord?.reviewState === 'ready') {
+    return 'Review ready'
+  }
+
+  if (state.assistantStatus === 'streaming' || state.executionRecord?.status === 'running') {
+    return 'Working'
+  }
+
+  if (state.activeSession) {
+    return 'Attached'
+  }
+
+  if (state.credentialStatus === 'configured' || Boolean(state.activeProjectPath)) {
+    return 'Connected'
+  }
+
+  return 'Ready'
+}
+
+function buildRecoveryView(state: AppShellState): DesktopRecoveryViewModel {
+  const startupState = deriveStartupState(state)
+  const snapshot = state.lastRecoverySnapshot
+
+  return {
+    state: startupState,
+    spotlight: snapshot
+      ? {
+          sessionId: snapshot.sessionId,
+          title: snapshot.recentActivity?.summary || `Resume ${snapshot.projectName}`,
+          projectName: snapshot.projectName,
+          projectPath: snapshot.projectPath,
+          effectiveModelId: snapshot.effectiveModelId,
+          lastActivityAt: snapshot.lastActivityAt,
+          restoredAt: snapshot.restoredAt,
+          recentActivity: snapshot.recentActivity,
+          workflowStatus: state.recoveryStatus === 'error' ? 'Needs attention' : 'Attached',
+          primaryAction: 'resume',
+          secondaryAction: 'open-chooser',
+        }
+      : null,
+    message: state.recoveryMessage,
+  }
+}
+
+function buildActiveSessionHeader(state: AppShellState): DesktopSessionHeader | null {
+  const session = state.activeSession
+  if (!session) {
+    return null
+  }
+
+  const attention = deriveSessionAttention(session, state.executionRecord?.reviewState === 'ready')
+
+  return {
+    sessionId: session.id,
+    title: session.title,
+    projectName: session.projectName,
+    projectPath: session.projectPath,
+    modelId: session.effectiveModelId,
+    workflowStatus: deriveDesktopStatus(state),
+    lastActivityAt: session.lastActivityAt,
+    currentActivitySummary: state.currentStageLabel ?? session.recentActivity?.summary ?? null,
+    attention,
+  }
+}
+
+function buildChooserView(state: AppShellState): DesktopChooserViewModel {
+  const workspaceSummary = buildWorkspaceSummary(state)
+  const rows = buildChooserRows(state)
+  const spotlight = rows.find((row) => row.isSpotlight) ?? null
+
+  return {
+    ready: state.sessionHistoryStatus === 'ready' || state.sessionHistoryStatus === 'idle',
+    workspaceSummary,
+    spotlight,
+    rows,
+    hasWorkspace: Boolean(state.activeProjectPath),
+    hasSessions: rows.length > 0,
+    conversationEntryAvailable: true,
+  }
+}
+
+function buildDesktopWorkflow(state: AppShellState): DesktopWorkflowViewModel {
+  const startupState = deriveStartupState(state)
+  const activeWorkspace = buildWorkspaceSummary(state)
+  const chooser = buildChooserView(state)
+  const activeSessionHeader = buildActiveSessionHeader(state)
+  const activeSessionAttention = activeSessionHeader?.attention ?? null
+
+  return {
+    startupState,
+    desktopStatus: deriveDesktopStatus(state),
+    trayMode: deriveTrayMode(state),
+    recovery: buildRecoveryView(state),
+    chooser,
+    activeWorkspace,
+    activeSessionHeader,
+    activeSessionAttention,
+  }
+}
+
+function parseInputSegments(prompt: string) {
+  return prompt
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      if (line.startsWith('/')) {
+        const [commandName] = line.slice(1).split(/\s+/)
+        return {
+          type: 'command' as const,
+          text: line,
+          commandName: commandName || undefined,
+        }
+      }
+
+      return {
+        type: 'text' as const,
+        text: line,
+      }
+    })
+}
+
 export const useAppShellStore = create<AppShellState>((set, get) => ({
-  mode: 'project',
+  mode: 'conversation',
   activeProjectPath: null,
   recentProjects: [defaultProject],
-  activeShellView: 'project-home',
+  activeShellView: 'conversation-home',
   globalDefaultModel: 'claude-sonnet',
   activeSessionModelOverride: null,
   activeSession: null,
@@ -229,14 +668,18 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   sessionHistoryError: null,
   recoveryStatus: 'idle',
   recoveryMessage: null,
+  lastRecoverySnapshot: null,
   resumeStatus: 'idle',
   rightPanelView: 'context',
   rightPanelOpen: false,
+  sidebarSessionsExpanded: true,
+  sidebarProjectsExpanded: true,
   bottomPanelExpanded: false,
   bottomPanelTab: 'output',
   credentialStatus: 'missing',
   projectWarning: null,
   draftPrompt: '',
+  pendingAttachments: [],
   assistantStatus: 'idle',
   assistantError: null,
   currentStageLabel: null,
@@ -248,21 +691,27 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   activePresetId: null,
   skillToggles: defaultSkillToggles,
   setMode: (mode) =>
-    set((state) => ({
-      mode,
-      activeShellView: mode === 'project' ? 'project-home' : 'conversation-home',
-      activeSession:
-        state.activeSession && (mode === 'conversation' || state.activeSession.projectPath === state.activeProjectPath)
-          ? state.activeSession
-          : mode === 'project'
-            ? null
-            : state.activeSession,
-      assistantStatus: 'idle',
-      assistantError: null,
-      currentStageLabel: null,
-      pendingProposal: mode === 'conversation' ? null : state.pendingProposal,
-      rightPanelOpen: mode === 'conversation' ? false : state.rightPanelOpen,
-    })),
+    set((state) => {
+      if (state.pendingProposal && mode !== state.mode) {
+        return state
+      }
+
+      const shouldKeepActiveSession =
+        mode === 'conversation'
+          ? state.activeSession?.projectPath === '__conversation__'
+          : state.activeSession?.projectPath === state.activeProjectPath
+
+      return {
+        mode,
+        activeShellView: mode === 'project' ? 'project-home' : 'conversation-home',
+        activeSession: shouldKeepActiveSession ? state.activeSession : null,
+        assistantStatus: 'idle',
+        assistantError: null,
+        currentStageLabel: null,
+        pendingProposal: state.pendingProposal,
+        rightPanelOpen: mode === 'conversation' ? false : state.rightPanelOpen,
+      }
+    }),
   setActiveProject: (project) =>
     set((state) => {
       if (!project) {
@@ -302,16 +751,37 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   setActiveSessionModelOverride: (activeSessionModelOverride) => set({ activeSessionModelOverride }),
   setRightPanelView: (rightPanelView) => set({ rightPanelView, rightPanelOpen: true }),
   setRightPanelOpen: (rightPanelOpen) => set({ rightPanelOpen }),
+  setSidebarSessionsExpanded: (sidebarSessionsExpanded) => set({ sidebarSessionsExpanded }),
+  setSidebarProjectsExpanded: (sidebarProjectsExpanded) => set({ sidebarProjectsExpanded }),
   setBottomPanelExpanded: (bottomPanelExpanded) => set({ bottomPanelExpanded }),
   setBottomPanelTab: (bottomPanelTab) => set({ bottomPanelTab }),
   setCredentialStatus: (credentialStatus) => set({ credentialStatus }),
   setDraftPrompt: (draftPrompt) => set({ draftPrompt }),
-  selectReviewFile: (selectedReviewFileId) => set({ selectedReviewFileId, bottomPanelTab: 'review', bottomPanelExpanded: true }),
+  addFileAttachments: async () => {
+    const attachments = await openFileAttachments()
+    if (attachments.length === 0) {
+      return
+    }
+    set((state) => ({ pendingAttachments: [...state.pendingAttachments, ...attachments] }))
+  },
+  addImageAttachments: async () => {
+    const attachments = await openImageAttachments()
+    if (attachments.length === 0) {
+      return
+    }
+    set((state) => ({ pendingAttachments: [...state.pendingAttachments, ...attachments] }))
+  },
+  removePendingAttachment: (attachmentId) =>
+    set((state) => ({
+      pendingAttachments: state.pendingAttachments.filter((attachment) => attachment.id !== attachmentId),
+    })),
+  selectReviewFile: (selectedReviewFileId) => set({ selectedReviewFileId, bottomPanelExpanded: true, bottomPanelTab: 'review' }),
   savePreset: (name) =>
     set((state) => {
+      const normalizedName = name.trim() || `Preset ${state.presets.length + 1}`
       const preset: ReviewPreset = {
         id: `preset-${crypto.randomUUID()}`,
-        name,
+        name: normalizedName,
         mode: state.mode,
         modelId: state.globalDefaultModel,
         openReviewByDefault: state.bottomPanelTab === 'review',
@@ -352,8 +822,11 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
     try {
       const sessionHistory = await listSessions(nextFilter)
       set({ sessionHistory, sessionHistoryStatus: 'ready' })
-    } catch {
-      set({ sessionHistoryStatus: 'error', sessionHistoryError: 'We couldn’t load session history.' })
+    } catch (error) {
+      set({
+        sessionHistoryStatus: 'error',
+        sessionHistoryError: getErrorMessage(error, 'We couldn’t load session history.'),
+      })
     }
   },
   applySessionHistoryFilter: async (projectPath) => {
@@ -372,11 +845,13 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       effectiveModelId: globalDefaultModel,
       title: `Session for ${projectName}`,
       recentActivity: {
-        label: 'Active',
+        label: 'Attached',
         summary: 'Ready to continue work.',
         at: now(),
       },
     })
+
+    const snapshot = await persistRecoverySnapshot(session)
 
     set({
       activeSession: session,
@@ -384,6 +859,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       activeShellView: 'project-sessions',
       recoveryStatus: 'idle',
       recoveryMessage: null,
+      lastRecoverySnapshot: snapshot,
       mode: 'project',
       draftPrompt: '',
       assistantStatus: 'idle',
@@ -395,15 +871,6 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       selectedReviewFileId: null,
     })
 
-    await saveRecoverySnapshot({
-      sessionId: session.id,
-      projectPath: session.projectPath,
-      projectName: session.projectName,
-      effectiveModelId: session.effectiveModelId,
-      restoredAt: now(),
-      lastActivityAt: session.lastActivityAt,
-      recentActivity: session.recentActivity,
-    })
     await get().loadSessionHistory(get().sessionHistoryFilter)
   },
   createConversationSession: async () => {
@@ -415,11 +882,13 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       effectiveModelId: globalDefaultModel,
       title: `Conversation ${timestamp}`,
       recentActivity: {
-        label: 'Active',
+        label: 'Connected',
         summary: 'Ready for a direct conversation.',
         at: now(),
       },
     })
+
+    const snapshot = await persistRecoverySnapshot(session)
 
     set({
       mode: 'conversation',
@@ -428,6 +897,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       activeShellView: 'conversation-home',
       recoveryStatus: 'idle',
       recoveryMessage: null,
+      lastRecoverySnapshot: snapshot,
       draftPrompt: '',
       assistantStatus: 'idle',
       assistantError: null,
@@ -439,22 +909,13 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       rightPanelOpen: false,
     })
 
-    await saveRecoverySnapshot({
-      sessionId: session.id,
-      projectPath: session.projectPath,
-      projectName: session.projectName,
-      effectiveModelId: session.effectiveModelId,
-      restoredAt: now(),
-      lastActivityAt: session.lastActivityAt,
-      recentActivity: session.recentActivity,
-    })
     await get().loadSessionHistory({})
   },
   resumeSession: async (sessionId) => {
-    set({ resumeStatus: 'loading', recoveryMessage: 'Restoring session' })
+    set({ resumeStatus: 'loading', recoveryMessage: 'Restoring session context.' })
 
     try {
-      const session = await rehydrateSession(sessionId)
+      const { session, snapshot } = await rehydrateSession(sessionId)
       const isConversation = session.projectPath === '__conversation__'
       set({
         activeSession: session,
@@ -465,6 +926,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
         resumeStatus: 'idle',
         recoveryStatus: 'restored',
         recoveryMessage: `Session restored for ${session.projectName}.`,
+        lastRecoverySnapshot: snapshot,
         assistantStatus: 'idle',
         assistantError: null,
         currentStageLabel: null,
@@ -475,11 +937,11 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
         rightPanelOpen: false,
       })
       await get().loadSessionHistory(get().sessionHistoryFilter)
-    } catch {
+    } catch (error) {
       set({
         resumeStatus: 'idle',
         recoveryStatus: 'error',
-        recoveryMessage: 'Unable to restore that session right now.',
+        recoveryMessage: getErrorMessage(error, 'Unable to restore that session right now.'),
       })
     }
   },
@@ -489,32 +951,18 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
     try {
       const snapshot = await loadRecoverySnapshot()
       if (!snapshot) {
-        set({ recoveryStatus: 'idle' })
+        set({ recoveryStatus: 'idle', lastRecoverySnapshot: null })
         await get().loadSessionHistory(get().sessionHistoryFilter)
         return
       }
 
-      const session = await rehydrateSession(snapshot.sessionId)
-      const isConversation = session.projectPath === '__conversation__'
-      set({
-        activeSession: session,
-        activeProjectPath: isConversation ? get().activeProjectPath : session.projectPath,
-        activeSessionModelOverride: session.effectiveModelId,
-        activeShellView: isConversation ? 'conversation-home' : 'project-sessions',
-        mode: isConversation ? 'conversation' : 'project',
-        recoveryStatus: 'restored',
-        recoveryMessage: `Session restored for ${session.projectName}.`,
-        pendingProposal: null,
-        executionRecord: null,
-        selectedExecutionId: null,
-        selectedReviewFileId: null,
-        rightPanelOpen: false,
-      })
+      set({ recoveryStatus: 'idle', lastRecoverySnapshot: snapshot })
       await get().loadSessionHistory(get().sessionHistoryFilter)
-    } catch {
+    } catch (error) {
       set({
         recoveryStatus: 'error',
-        recoveryMessage: 'Recovery failed. You can keep working and reload session history.',
+        recoveryMessage: getErrorMessage(error, 'Recovery failed. Open the session chooser or start a new session.'),
+        lastRecoverySnapshot: null,
       })
       await get().loadSessionHistory(get().sessionHistoryFilter)
     }
@@ -542,10 +990,15 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       return
     }
 
+    const inputSegments = parseInputSegments(prompt)
+    const attachments = state.pendingAttachments
+
     const userEvent = createEvent({
       kind: 'user-message',
       displayRole: 'user',
       body: prompt,
+      inputSegments,
+      attachments,
     })
 
     let transcript = [...session.transcript, userEvent]
@@ -557,13 +1010,18 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       recentActivity: createAssistantActivity(`Prompt submitted: ${prompt}`),
       lastActivityAt: now(),
     }
+    const streamingSessionId = session.id
+    const streamingTurnId = crypto.randomUUID()
+    const persistStreamingSession = createStreamingSessionPersister(session.id)
+    const isCurrentStreamingSession = () => get().activeSession?.id === streamingSessionId
 
     set({
       activeSession: nextSession,
       assistantStatus: 'streaming',
       assistantError: null,
-      currentStageLabel: state.mode === 'project' ? 'Understanding request' : 'Responding',
+      currentStageLabel: 'Working',
       draftPrompt: '',
+      pendingAttachments: [],
       pendingProposal: null,
       executionRecord: null,
       selectedExecutionId: null,
@@ -583,9 +1041,15 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
           modelId: nextSession.effectiveModelId,
           projectName: nextSession.projectName,
           projectPath: state.activeProjectPath,
+          inputSegments,
+          attachments,
+          turnId: streamingTurnId,
         },
         {
-          onStage: (stageLabel, body) => {
+          onStage: async (stageLabel, body) => {
+            if (!isCurrentStreamingSession()) {
+              return
+            }
             transcript = [
               ...transcript,
               createEvent({
@@ -597,12 +1061,21 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
             nextSession = {
               ...nextSession,
               transcript,
-              recentActivity: createAssistantActivity(stageLabel),
+              recentActivity: createAssistantActivity(body),
               lastActivityAt: now(),
             }
             set({ activeSession: nextSession, currentStageLabel: stageLabel })
+            nextSession = await persistStreamingSession(nextSession, true)
+            set({ activeSession: nextSession })
           },
-          onAssistantStart: () => {
+          onAssistantStart: async () => {
+            if (!isCurrentStreamingSession()) {
+              return
+            }
+            const existingAssistantEvent = transcript.find((event) => event.id === assistantEventId)
+            if (existingAssistantEvent) {
+              return
+            }
             const assistantEvent = createEvent({
               kind: 'assistant-message',
               displayRole: 'assistant',
@@ -613,12 +1086,26 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
             nextSession = {
               ...nextSession,
               transcript,
-              recentActivity: createAssistantActivity('Assistant is responding'),
+              recentActivity: createAssistantActivity('Assistant response in progress'),
               lastActivityAt: now(),
             }
             set({ activeSession: nextSession })
+            nextSession = await persistStreamingSession(nextSession, true)
+            set({ activeSession: nextSession })
           },
-          onAssistantChunk: (chunk) => {
+          onAssistantChunk: async (chunk) => {
+            if (!isCurrentStreamingSession()) {
+              return
+            }
+            if (!assistantEventId) {
+              const assistantEvent = createEvent({
+                kind: 'assistant-message',
+                displayRole: 'assistant',
+                body: '',
+              })
+              assistantEventId = assistantEvent.id
+              transcript = [...transcript, assistantEvent]
+            }
             transcript = transcript.map((event) =>
               event.id === assistantEventId
                 ? {
@@ -630,15 +1117,16 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
             nextSession = {
               ...nextSession,
               transcript,
-              recentActivity: createAssistantActivity('Streaming assistant response'),
+              recentActivity: createAssistantActivity('Assistant response in progress'),
               lastActivityAt: now(),
             }
             set({ activeSession: nextSession })
+            nextSession = await persistStreamingSession(nextSession)
+            set({ activeSession: nextSession })
           },
-          onCommandProposal: (proposalPayload) => {
-            const proposal: CommandProposal = {
-              id: `proposal-${crypto.randomUUID()}`,
-              ...proposalPayload,
+          onCommandProposal: async (proposal) => {
+            if (!isCurrentStreamingSession()) {
+              return
             }
             transcript = [
               ...transcript,
@@ -652,8 +1140,8 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
               ...nextSession,
               transcript,
               recentActivity: {
-                label: 'Approval required',
-                summary: proposal.summary,
+                label: 'Awaiting approval',
+                summary: `Waiting for approval: ${proposal.summary}`,
                 at: now(),
               },
               lastActivityAt: now(),
@@ -665,9 +1153,15 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
               selectedExecutionId: proposal.id,
               currentStageLabel: 'Awaiting approval',
               bottomPanelExpanded: true,
+              bottomPanelTab: 'output',
             })
+            nextSession = await persistStreamingSession(nextSession, true)
+            set({ activeSession: nextSession })
           },
-          onToolSummary: (toolLabel, toolSummary) => {
+          onToolSummary: async (toolLabel, toolSummary) => {
+            if (!isCurrentStreamingSession()) {
+              return
+            }
             transcript = [
               ...transcript,
               createEvent({
@@ -684,56 +1178,75 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
               lastActivityAt: now(),
             }
             set({ activeSession: nextSession })
+            nextSession = await persistStreamingSession(nextSession, true)
+            set({ activeSession: nextSession })
           },
-          onComplete: () => {
+          onComplete: async () => {
+            if (!isCurrentStreamingSession()) {
+              return
+            }
             nextSession = {
               ...nextSession,
               transcript,
               recentActivity: {
-                label: state.mode === 'project' && get().pendingProposal ? 'Approval required' : 'Complete',
-                summary:
-                  state.mode === 'project' && get().pendingProposal
-                    ? 'Waiting for command approval before execution.'
-                    : state.mode === 'project'
-                      ? 'Project response complete.'
-                      : 'Conversation response complete.',
+                label: get().pendingProposal ? 'Awaiting approval' : state.mode === 'project' ? 'Attached' : 'Connected',
+                summary: get().pendingProposal
+                  ? 'Waiting for command approval before execution.'
+                  : state.mode === 'project'
+                    ? 'Ready to continue work.'
+                    : 'Ready for the next message.',
                 at: now(),
               },
               lastActivityAt: now(),
             }
             set({
               activeSession: nextSession,
-              currentStageLabel: state.mode === 'project' && get().pendingProposal ? 'Awaiting approval' : state.mode === 'project' ? 'Done' : null,
+              currentStageLabel: get().pendingProposal ? 'Awaiting approval' : null,
             })
+            nextSession = await persistStreamingSession(nextSession, true)
+            set({ activeSession: nextSession })
           },
         },
       )
 
       const persisted = await persistSession(nextSession)
-      set({
-        activeSession: persisted,
-        assistantStatus: 'idle',
-        currentStageLabel: get().pendingProposal ? 'Awaiting approval' : null,
-      })
+      const snapshot = await persistRecoverySnapshot(persisted)
+      if (isCurrentStreamingSession()) {
+        set({
+          activeSession: persisted,
+          assistantStatus: 'idle',
+          currentStageLabel: get().pendingProposal ? 'Awaiting approval' : null,
+          lastRecoverySnapshot: snapshot,
+        })
+      } else {
+        set({ lastRecoverySnapshot: snapshot })
+      }
       await get().loadSessionHistory(get().sessionHistoryFilter)
-    } catch {
-      const failedSession = {
+    } catch (error) {
+      const assistantError = getErrorMessage(error, 'The assistant could not finish this response.')
+      const failedSession: SessionDetail = {
         ...nextSession,
-        status: 'needs-attention' as const,
+        status: 'needs-attention',
         recentActivity: {
           label: 'Needs attention',
-          summary: 'Assistant response failed before completion.',
+          summary: assistantError,
           at: now(),
         },
         lastActivityAt: now(),
       }
       const persisted = await persistSession(failedSession)
-      set({
-        activeSession: persisted,
-        assistantStatus: 'error',
-        assistantError: 'The assistant could not finish this response.',
-        currentStageLabel: null,
-      })
+      const snapshot = await persistRecoverySnapshot(persisted)
+      if (isCurrentStreamingSession()) {
+        set({
+          activeSession: persisted,
+          assistantStatus: 'error',
+          assistantError,
+          currentStageLabel: null,
+          lastRecoverySnapshot: snapshot,
+        })
+      } else {
+        set({ lastRecoverySnapshot: snapshot })
+      }
       await get().loadSessionHistory(get().sessionHistoryFilter)
     }
   },
@@ -751,8 +1264,8 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       ...activeSession,
       transcript,
       recentActivity: {
-        label: 'Execution running',
-        summary: pendingProposal.summary,
+        label: 'Working',
+        summary: `Running command: ${pendingProposal.summary}`,
         at: now(),
       },
       lastActivityAt: now(),
@@ -761,6 +1274,9 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
     let nextExecution: ExecutionRecord = {
       ...executionRecord,
       status: 'running',
+      reviewState: 'pending',
+      reviewUnavailableMessage: null,
+      changedFiles: [],
       startedAt: now(),
       output: [createExecutionOutput('system', 'Approval accepted. Starting execution...')],
     }
@@ -770,7 +1286,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       pendingProposal: null,
       executionRecord: nextExecution,
       selectedExecutionId: nextExecution.id,
-      currentStageLabel: 'Execution running',
+      currentStageLabel: 'Working',
       bottomPanelExpanded: true,
       bottomPanelTab: 'output',
     })
@@ -779,14 +1295,20 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
     set({ activeSession: nextSession })
 
     try {
-      await runApprovedCommand(nextExecution.command, {
-        onStatus: (label) => {
-          set({ currentStageLabel: label })
+      await runApprovedCommand(nextExecution.command, nextExecution.projectPath, nextExecution.workingDirectory, {
+        onStatus: () => {
+          set({ currentStageLabel: 'Working' })
         },
         onOutput: (stream, text) => {
+          const output = [...nextExecution.output, createExecutionOutput(stream, text)]
           nextExecution = {
             ...nextExecution,
-            output: [...nextExecution.output, createExecutionOutput(stream, text)],
+            output,
+            reviewUnavailableMessage: deriveReviewUnavailableMessage(output),
+          }
+          nextExecution = {
+            ...nextExecution,
+            reviewState: deriveExecutionReviewState(nextExecution),
           }
           set({ executionRecord: nextExecution })
         },
@@ -798,6 +1320,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
           nextExecution = {
             ...nextExecution,
             changedFiles,
+            reviewState: changedFiles.length > 0 ? 'ready' : nextExecution.reviewState,
           }
           transcript = appendReviewAvailable(transcript, changedFiles.length)
           nextSession = {
@@ -805,7 +1328,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
             transcript,
             recentActivity: {
               label: 'Review ready',
-              summary: `${changedFiles.length} changed file${changedFiles.length === 1 ? '' : 's'} ready for inspection.`,
+              summary: `Review ready: ${changedFiles.length} changed file${changedFiles.length === 1 ? '' : 's'} ready for inspection.`,
               at: now(),
             },
             lastActivityAt: now(),
@@ -813,24 +1336,49 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
           set({
             executionRecord: nextExecution,
             activeSession: nextSession,
-            selectedReviewFileId: changedFiles[0]?.id ?? null,
+            selectedReviewFileId: syncReviewSelection(get().executionRecord, nextExecution, get().selectedReviewFileId),
             bottomPanelExpanded: true,
             bottomPanelTab: 'review',
           })
         },
-        onComplete: () => {
+        onComplete: (status) => {
           nextExecution = {
             ...nextExecution,
-            status: 'completed',
+            status: status === 'failed' ? 'failed' : 'completed',
             completedAt: now(),
           }
-          transcript = appendExecutionUpdate(transcript, 'Execution completed successfully.', 'completed', pendingProposal)
+          nextExecution = {
+            ...nextExecution,
+            reviewUnavailableMessage: deriveReviewUnavailableMessage(nextExecution.output),
+            reviewState: deriveExecutionReviewState(nextExecution),
+          }
+          transcript = appendExecutionUpdate(
+            transcript,
+            status === 'failed' ? 'Execution failed.' : 'Execution completed successfully.',
+            status === 'failed' ? 'failed' : 'completed',
+            pendingProposal,
+          )
           nextSession = {
             ...nextSession,
+            status: status === 'failed' ? 'needs-attention' : nextSession.status,
             transcript,
             recentActivity: {
-              label: 'Execution complete',
-              summary: pendingProposal.summary,
+              label:
+                status === 'failed'
+                  ? 'Failed'
+                  : nextExecution.reviewState === 'ready'
+                    ? 'Review ready'
+                    : nextExecution.reviewState === 'unavailable'
+                      ? 'Attached'
+                      : 'Attached',
+              summary:
+                status === 'failed'
+                  ? buildExecutionOutcomeSummary(nextExecution.output, 'Execution failed before completion.')
+                  : nextExecution.reviewState === 'ready'
+                    ? `Review ready: ${nextExecution.changedFiles.length} changed file${nextExecution.changedFiles.length === 1 ? '' : 's'} ready for inspection.`
+                    : nextExecution.reviewState === 'unavailable'
+                      ? nextExecution.reviewUnavailableMessage ?? 'Execution completed, but review artifacts were unavailable for this workspace.'
+                      : buildExecutionOutcomeSummary(nextExecution.output, 'Execution completed. Ready to continue work.'),
               at: now(),
             },
             lastActivityAt: now(),
@@ -838,13 +1386,16 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
           set({
             activeSession: nextSession,
             executionRecord: nextExecution,
-            currentStageLabel: 'Execution complete',
+            selectedReviewFileId: syncReviewSelection(get().executionRecord, nextExecution, get().selectedReviewFileId),
+            currentStageLabel: status === 'failed' ? null : nextExecution.reviewState === 'ready' ? 'Review ready' : null,
           })
         },
         onError: () => {
           nextExecution = {
             ...nextExecution,
             status: 'failed',
+            reviewState: 'empty',
+            reviewUnavailableMessage: null,
             completedAt: now(),
           }
           transcript = appendExecutionUpdate(transcript, 'Execution failed.', 'failed', pendingProposal)
@@ -853,8 +1404,8 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
             status: 'needs-attention',
             transcript,
             recentActivity: {
-              label: 'Execution failed',
-              summary: pendingProposal.summary,
+              label: 'Failed',
+              summary: buildExecutionOutcomeSummary(nextExecution.output, 'Execution failed before completion.'),
               at: now(),
             },
             lastActivityAt: now(),
@@ -869,13 +1420,19 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       })
 
       const persisted = await persistSession(nextSession)
-      set({ activeSession: persisted })
+      const snapshot = await persistRecoverySnapshot(persisted)
+      set({ activeSession: persisted, lastRecoverySnapshot: snapshot })
       await get().loadSessionHistory(get().sessionHistoryFilter)
-    } catch {
+    } catch (error) {
+      const assistantError = getErrorMessage(error, 'Execution failed before completion.')
+      const output = [...nextExecution.output, createExecutionOutput('stderr', assistantError)]
       nextExecution = {
         ...nextExecution,
         status: 'failed',
+        reviewState: 'empty',
+        reviewUnavailableMessage: null,
         completedAt: now(),
+        output,
       }
       transcript = appendExecutionUpdate(transcript, 'Execution failed.', 'failed', pendingProposal)
       nextSession = {
@@ -883,18 +1440,21 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
         status: 'needs-attention',
         transcript,
         recentActivity: {
-          label: 'Execution failed',
-          summary: pendingProposal.summary,
+          label: 'Failed',
+          summary: assistantError,
           at: now(),
         },
         lastActivityAt: now(),
       }
       const persisted = await persistSession(nextSession)
+      const snapshot = await persistRecoverySnapshot(persisted)
       set({
         activeSession: persisted,
         executionRecord: nextExecution,
+        selectedReviewFileId: null,
         currentStageLabel: null,
-        assistantError: 'Execution failed before completion.',
+        assistantError,
+        lastRecoverySnapshot: snapshot,
       })
       await get().loadSessionHistory(get().sessionHistoryFilter)
     }
@@ -906,13 +1466,14 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       return
     }
 
-    const transcript = appendApprovalResolution(activeSession.transcript, 'rejected', pendingProposal)
+    let transcript = appendApprovalResolution(activeSession.transcript, 'rejected', pendingProposal)
+    transcript = appendExecutionUpdate(transcript, 'Command rejected. No execution started.', 'rejected', pendingProposal)
     const nextSession: SessionDetail = {
       ...activeSession,
       transcript,
       recentActivity: {
-        label: 'Command rejected',
-        summary: pendingProposal.summary,
+        label: 'Rejected',
+        summary: `Rejected command: ${pendingProposal.summary}`,
         at: now(),
       },
       lastActivityAt: now(),
@@ -921,20 +1482,30 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
     const nextExecution: ExecutionRecord = {
       ...executionRecord,
       status: 'rejected',
+      reviewState: 'empty',
+      reviewUnavailableMessage: null,
       completedAt: now(),
       output: [...executionRecord.output, createExecutionOutput('system', 'Command rejected. No execution started.')],
     }
 
     const persisted = await persistSession(nextSession)
+    const snapshot = await persistRecoverySnapshot(persisted)
     set({
       activeSession: persisted,
+      lastRecoverySnapshot: snapshot,
       pendingProposal: null,
       executionRecord: nextExecution,
       selectedExecutionId: nextExecution.id,
-      currentStageLabel: null,
+      selectedReviewFileId: null,
+      currentStageLabel: 'Rejected',
       bottomPanelExpanded: true,
       bottomPanelTab: 'output',
     })
     await get().loadSessionHistory(get().sessionHistoryFilter)
   },
+  getDesktopWorkflow: () => buildDesktopWorkflow(get()),
+  getDesktopStatus: () => deriveDesktopStatus(get()),
+  getDesktopTrayMode: () => deriveTrayMode(get()),
+  getChooserView: () => buildChooserView(get()),
+  getActiveSessionHeader: () => buildActiveSessionHeader(get()),
 }))

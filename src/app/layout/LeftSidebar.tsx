@@ -1,4 +1,4 @@
-import { Clock3, Folder, FolderOpen, MessageSquare } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clock3, Folder, FolderOpen, MessageSquare } from 'lucide-react'
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
 
@@ -18,22 +18,54 @@ function formatRelativeTime(timestamp: string) {
   return `${days}d ago`
 }
 
-function formatStatusLabel(status: 'active' | 'idle' | 'needs-attention' | 'complete') {
-  switch (status) {
-    case 'needs-attention':
+function attentionLabel(attention: 'approval' | 'review' | 'failure' | 'recovery' | null) {
+  switch (attention) {
+    case 'approval':
+      return 'Awaiting approval'
+    case 'review':
+      return 'Review ready'
+    case 'failure':
+      return 'Failed'
+    case 'recovery':
       return 'Needs attention'
-    case 'complete':
-      return 'Complete'
-    case 'idle':
-      return 'Idle'
     default:
-      return 'Active'
+      return null
+  }
+}
+
+function attentionTone(attention: 'approval' | 'review' | 'failure' | 'recovery' | null) {
+  switch (attention) {
+    case 'approval':
+      return 'warning'
+    case 'review':
+      return 'review'
+    case 'failure':
+    case 'recovery':
+      return 'danger'
+    default:
+      return 'neutral'
   }
 }
 
 export function LeftSidebar() {
-  const { activeSession, recentProjects, sessionHistory, resumeSession, setActiveProject } = useAppShellStore()
-  const recentSessions = sessionHistory.slice(0, 6)
+  const {
+    activeProjectPath,
+    activeSession,
+    mode,
+    recentProjects,
+    sessionHistory,
+    getDesktopWorkflow,
+    resumeSession,
+    setActiveProject,
+    sidebarProjectsExpanded,
+    sidebarSessionsExpanded,
+    setSidebarProjectsExpanded,
+    setSidebarSessionsExpanded,
+  } = useAppShellStore()
+
+  const desktopWorkflow = getDesktopWorkflow()
+  const chooserRows = desktopWorkflow.chooser.rows.slice(0, 6)
+  const workspaceProjects = recentProjects.filter((project) => project.path)
 
   const handleProjectPick = async () => {
     try {
@@ -55,67 +87,100 @@ export function LeftSidebar() {
           <MessageSquare size={15} />
         </div>
         <div className="sidebar__brand-copy">
-          <strong>Claude shell</strong>
-          <span>Desktop workspace</span>
+          <strong>Claude Desktop</strong>
+          <span>{mode === 'project' ? 'Workspace navigation' : 'Conversation navigation'}</span>
         </div>
       </section>
 
       <section className="sidebar__section">
         <div className="sidebar__section-header">
-          <h2 className="sidebar__title-wrap">
-            <Clock3 size={13} />
-            <span className="sidebar__title">Recent sessions</span>
-          </h2>
-        </div>
-        {recentSessions.length === 0 ? <p className="sidebar__helper">No recent sessions yet</p> : null}
-        <ul className="sidebar__list">
-          {recentSessions.map((session) => {
-            const isActive = session.id === activeSession?.id
-            return (
-              <li key={session.id} className="sidebar__item">
-                <button
-                  className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
-                  onClick={() => resumeSession(session.id)}
-                  title={session.title}
-                >
-                  <div className="sidebar__row-head">
-                    <MessageSquare size={13} />
-                    <strong>{session.title}</strong>
-                  </div>
-                  <small>
-                    {formatRelativeTime(session.lastActivityAt)} · {formatStatusLabel(session.status)}
-                  </small>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-
-      <section className="sidebar__section">
-        <div className="sidebar__section-header">
-          <h2 className="sidebar__title-wrap">
-            <Folder size={13} />
-            <span className="sidebar__title">Projects</span>
-          </h2>
+          <button className="sidebar__section-toggle" onClick={() => setSidebarProjectsExpanded(!sidebarProjectsExpanded)}>
+            <h2 className="sidebar__title-wrap">
+              {sidebarProjectsExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+              <Folder size={13} />
+              <span className="sidebar__title">Workspaces</span>
+            </h2>
+          </button>
           <button className="sidebar__link-action" onClick={handleProjectPick}>
             <FolderOpen size={13} />
             <span>Open</span>
           </button>
         </div>
-        <ul className="sidebar__list">
-          {recentProjects.map((project) => (
-            <li key={`${project.name}-${project.path ?? 'none'}`} className="sidebar__item">
-              <button className="sidebar__row" onClick={() => setActiveProject(project)} title={project.path ?? project.name}>
-                <div className="sidebar__row-head">
-                  <Folder size={13} />
-                  <strong>{project.name}</strong>
-                </div>
-                {project.warning === 'non-standard' ? <small className="sidebar__warning">Non-standard project folder</small> : null}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {sidebarProjectsExpanded ? (
+          <>
+            {workspaceProjects.length === 0 ? <p className="sidebar__helper">No workspace selected</p> : null}
+            <ul className="sidebar__list">
+              {workspaceProjects.map((project) => {
+                const isActiveWorkspace = project.path === activeProjectPath && mode === 'project'
+                return (
+                  <li key={`${project.name}-${project.path ?? 'none'}`} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActiveWorkspace ? 'sidebar__row--active' : ''}`}
+                      onClick={() => setActiveProject(project)}
+                      title={project.path ?? project.name}
+                    >
+                      <div className="sidebar__row-head">
+                        <Folder size={13} />
+                        <strong>{project.name}</strong>
+                      </div>
+                      <small>{project.path ?? 'Local workspace'}</small>
+                      {project.warning === 'non-standard' ? <small className="sidebar__warning">Needs attention</small> : null}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        ) : null}
+      </section>
+
+      <section className="sidebar__section">
+        <div className="sidebar__section-header">
+          <button className="sidebar__section-toggle" onClick={() => setSidebarSessionsExpanded(!sidebarSessionsExpanded)}>
+            <h2 className="sidebar__title-wrap">
+              {sidebarSessionsExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+              <Clock3 size={13} />
+              <span className="sidebar__title">Recent sessions</span>
+            </h2>
+          </button>
+        </div>
+        {sidebarSessionsExpanded ? (
+          <>
+            {sessionHistory.length === 0 ? <p className="sidebar__helper">No recent sessions yet</p> : null}
+            <ul className="sidebar__list">
+              {chooserRows.map((row) => {
+                const isActive = row.sessionId === activeSession?.id
+                const badgeLabel = attentionLabel(row.attention)
+                return (
+                  <li key={row.sessionId} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                      onClick={() => resumeSession(row.sessionId)}
+                      title={row.title}
+                    >
+                      <div className="sidebar__row-head sidebar__row-head--spread">
+                        <div className="sidebar__row-head">
+                          <MessageSquare size={13} />
+                          <strong>{row.title}</strong>
+                        </div>
+                        {badgeLabel ? (
+                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(row.attention)}`}>
+                            {badgeLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>{row.projectName}</small>
+                      <small>{row.summary}</small>
+                      <small>
+                        {formatRelativeTime(row.lastActivityAt)} · {row.workflowStatus}
+                      </small>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        ) : null}
       </section>
     </div>
   )

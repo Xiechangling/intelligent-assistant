@@ -31,6 +31,19 @@ pub struct CommandProposal {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SessionAttachment {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+    pub path: String,
+    pub mime_type: Option<String>,
+    pub size_bytes: Option<u64>,
+    pub source: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionTranscriptEvent {
     pub id: String,
     pub kind: String,
@@ -43,6 +56,8 @@ pub struct SessionTranscriptEvent {
     pub proposal: Option<CommandProposal>,
     pub approval_decision: Option<String>,
     pub execution_status: Option<String>,
+    pub input_segments: Option<Vec<crate::assistant_service::AssistantInputSegment>>,
+    pub attachments: Option<Vec<SessionAttachment>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

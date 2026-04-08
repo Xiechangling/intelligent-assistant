@@ -2,67 +2,71 @@
 
 ## What This Is
 
-Intelligent Assistant is a Windows-first desktop application that turns the Claude Code workflow into a polished local GUI experience for a single power user. It combines natural-language coding assistance, project workspace management, model switching, session management, and configurable skills into one desktop product inspired by Claude Code and cc-switch. The MVP focuses on making local coding-agent work more intuitive than the terminal-first experience.
+Intelligent Assistant is a shipped Windows-first desktop application that turns the Claude Code workflow into a polished local GUI experience for a single power user. The shipped milestone combines project workspace management, model switching, durable sessions, real streaming assistant conversations, approval/output/review workflow surfaces, and Claude Code Desktop-inspired shell alignment inside one local-first Tauri product.
 
 ## Core Value
 
 Make Claude Code-style local coding workflows significantly easier to configure, control, and reuse from a desktop interface without losing the power of project-aware agent execution.
 
+## Current State
+
+- **Shipped milestone:** `v2.1.88` on 2026-04-08
+- **Delivery status:** 6 phases complete, 20 plans complete, milestone audit passed
+- **Validation baseline:** startup E2E 5/5, approval E2E 5/5, review E2E 5/5, status E2E 1/1, build passed
+- **Product baseline:** Windows-first, single-user, local-first Claude Code desktop workbench with project/session/approval/review cohesion
+
 ## Requirements
 
 ### Validated
 
-- [x] User can start, resume, and manage coding sessions through a natural-language desktop interface. Validated in Phase 2 after user approval of session persistence, recovery, and session-history UI.
+- [x] Local project selection, recent project switching, and active project visibility — validated in v2.1.88
+- [x] Desktop model selection and future-default model switching from the GUI — validated in v2.1.88
+- [x] Durable sessions, recovery, history, and model-aware metadata — validated in v2.1.88
+- [x] Dual-mode assistant interaction with true streaming responses and project-aware task flow — validated in v2.1.88
+- [x] Approval gating, execution visibility, and review-ready desktop workflow — validated in v2.1.88
+- [x] Presets and workflow capability configuration from the GUI — validated in v2.1.88
+- [x] Phase 6 desktop alignment requirements `PH6-01` through `PH6-07` — validated in v2.1.88
 
 ### Active
 
-- [ ] User can open the desktop app, select or manage a local project directory, and work against that project context.
-- [ ] User can switch models, adjust key runtime configuration, and review command/diff outcomes from the GUI.
+- None. Define the next milestone requirements with `/gsd-new-milestone` before reopening active scope.
 
 ### Out of Scope
 
-- Team collaboration and multi-user shared workspaces — initial version is intentionally optimized for single-user workflows.
-- Cloud sync and plugin marketplace features — these add platform and product complexity before the core desktop workflow is validated.
+- Team collaboration and multi-user shared workspaces — the shipped milestone is intentionally optimized for a single self-user workflow.
+- Cloud sync and plugin marketplace features — these remain deferred until a future milestone explicitly reopens them.
+- Generalized ecosystem/platform expansion before the Windows-first workflow is taken further.
 
 ## Context
 
-The product is motivated by daily use of Claude Code in the terminal for knowledge Q&A, code analysis, and code modification. The current pain points are command-line startup friction, awkward interaction and configuration, non-intuitive model switching, and poor session visibility. The user wants a desktop product that combines the strengths of Claude Code and cc-switch while keeping project-aware local agent workflows intact. The MVP should prioritize polished usability, visible state, and developer productivity over collaboration or ecosystem expansion.
+The shipped milestone solved the original terminal-friction problem by moving startup, project selection, model control, session continuity, streaming interaction, approval review, and changed-file inspection into one cohesive desktop shell. The current codebase is now a brownfield Tauri + React + Rust desktop app with shared Zustand workflow state, native-backed project/credential/session services, and Playwright-backed UI verification for the main user flows.
 
 ## Constraints
 
-- **Platform**: Windows-first desktop delivery — the initial product should optimize for Windows developer workflows before expanding to other platforms.
-- **Scope**: MVP for self-use — feature selection should favor single-user productivity over generalized team capabilities.
-- **UX**: Polished desktop UI — interface quality is part of the product value, not a later enhancement.
-- **Architecture**: Hybrid local CLI + Claude API approach — preserve strong local project/task execution while enabling richer desktop control surfaces.
-- **Security**: Local-first access model with API key support — sensitive configuration and command execution boundaries must remain explicit and safe.
+- **Platform:** Windows-first desktop delivery remains the current baseline.
+- **Scope:** Single-user productivity remains the design center.
+- **UX:** Polished desktop UI is still product value, not optional chrome.
+- **Architecture:** Hybrid local desktop shell + native Rust services + Claude API remains the validated direction.
+- **Security:** Local-first access model with explicit approval boundaries and OS-backed credential storage remains mandatory.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build a desktop GUI rather than extend terminal usage | Main user pain is CLI friction around startup, configuration, and visibility | — Pending |
-| Optimize MVP for a single self-user on Windows first | Current adoption target is the project creator, not teams | — Pending |
-| Use a hybrid architecture that combines local CLI orchestration with Claude API control | This best matches the desired blend of Claude Code power and richer desktop interaction | — Pending |
-| Treat model switching, session management, and project management as core MVP capabilities | These are the main reasons the existing workflow feels cumbersome | — Pending |
+| Build a desktop GUI rather than extend terminal usage | Main pain was CLI friction around startup, configuration, and visibility | ✓ Validated in v2.1.88 |
+| Optimize MVP for a single self-user on Windows first | Initial adoption target is the project creator, not teams | ✓ Validated in v2.1.88 |
+| Use a hybrid architecture combining local orchestration with Claude API control | Best fit for Claude Code power plus richer desktop interaction | ✓ Validated in v2.1.88 |
+| Treat project management, model switching, session continuity, and approval/review surfaces as core capabilities | These were the highest-friction parts of the original workflow | ✓ Validated in v2.1.88 |
+| Use one shared shell store for chooser, session, tray, and workflow state | Keeps cross-surface desktop state coherent | ✓ Validated in v2.1.88 |
+| Keep review in the lifecycle tray and settings/presets in the right panel | Preserves center-workspace-first hierarchy | ✓ Validated in v2.1.88 |
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
+This document now reflects a shipped brownfield baseline.
 
-**Current state:** Phase 2 is validated for local session persistence, recovery, and history UX after user approval.
-
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+- `v2.1.88` is archived in `.planning/milestones/`.
+- The next milestone should begin with fresh requirement definition rather than continuing to mutate the shipped MVP requirement set.
+- Future milestone work should evolve this file by adding new Active requirements and updating Current State after the next shipping cycle.
 
 ---
-*Last updated: 2026-03-30 after Phase 2 implementation pass*
+*Last updated: 2026-04-08 after v2.1.88 milestone completion*

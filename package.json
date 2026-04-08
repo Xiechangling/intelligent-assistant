@@ -7,7 +7,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri:dev": "tauri dev"
+    "tauri:dev": "tauri dev",
+    "test:e2e": "playwright test",
+    "test:e2e:startup": "playwright test tests/e2e/startup.spec.ts",
+    "test:e2e:chooser": "playwright test tests/e2e/chooser.spec.ts",
+    "test:e2e:status": "playwright test tests/e2e/status-system.spec.ts",
+    "test:e2e:approval": "playwright test tests/e2e/approval-flow.spec.ts",
+    "test:e2e:review": "playwright test tests/e2e/review-flow.spec.ts",
+    "test:e2e:presets": "playwright test tests/e2e/presets.spec.ts",
+    "test:e2e:capabilities": "playwright test tests/e2e/capabilities.spec.ts",
+    "test:e2e:phase5": "playwright test tests/e2e/review-flow.spec.ts tests/e2e/presets.spec.ts tests/e2e/capabilities.spec.ts",
+    "verify:phase5": "npm run build && npm run test:e2e:phase5"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
@@ -23,6 +33,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.59.1",
     "typescript": "^5.6.3",
     "vite": "^6.0.0"
   }

@@ -10,7 +10,7 @@ export function AppShell() {
   const showBottomPanel = bottomPanelExpanded || Boolean(pendingProposal) || Boolean(executionRecord)
 
   return (
-    <div className={`app-shell ${rightPanelOpen ? 'app-shell--drawer-open' : ''}`}>
+    <div className={`app-shell ${rightPanelOpen ? 'app-shell--drawer-open' : ''} ${showBottomPanel ? 'app-shell--bottom-open' : ''}`}>
       <header className="app-shell__top app-shell__top--sticky">
         <TopToolbar />
       </header>

@@ -1,18 +1,48 @@
+import { invoke } from '@tauri-apps/api/core'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import type {
+  AssistantStreamEvent,
+  AssistantStreamStartResponse,
+  CommandProposal,
+  ExecutionOutputEntry,
+  SessionAttachment,
+} from '../state/types'
+
+const isBrowserTest = typeof window !== 'undefined' && '__PLAYWRIGHT_MOCKS__' in window
+const ASSISTANT_STREAM_EVENT = 'assistant-turn-event'
+
+type PlaywrightAssistantMocks = {
+  assistantStreamEvents?: AssistantStreamEvent[]
+  assistantTurnResponse?: AssistantTurnResponse
+  executeCommandResponse: ExecuteCommandResponse
+}
+
+function getAssistantMocks(): PlaywrightAssistantMocks | null {
+  if (!isBrowserTest) {
+    return null
+  }
+
+  return (window as typeof window & { __PLAYWRIGHT_MOCKS__?: { assistant?: PlaywrightAssistantMocks } }).__PLAYWRIGHT_MOCKS__?.assistant ?? null
+}
+
+export interface AssistantInputSegment {
+  type: 'text' | 'command'
+  text: string
+  commandName?: string
+}
+
 export interface AssistantStreamInput {
   mode: 'project' | 'conversation'
   prompt: string
   modelId: string
   projectName?: string | null
   projectPath?: string | null
+  inputSegments?: AssistantInputSegment[]
+  attachments?: SessionAttachment[]
+  turnId?: string
 }
 
-export interface CommandProposalPayload {
-  summary: string
-  command: string
-  projectPath: string
-  workingDirectory: string
-  requiresApproval: boolean
-}
+export type CommandProposalPayload = CommandProposal
 
 export interface ChangedFilePayload {
   path: string
@@ -21,125 +51,200 @@ export interface ChangedFilePayload {
 }
 
 export interface AssistantStreamHandlers {
-  onStage?: (stageLabel: string, body: string) => void
-  onToolSummary?: (toolLabel: string, toolSummary: string) => void
-  onAssistantStart?: () => void
-  onAssistantChunk: (chunk: string) => void
-  onCommandProposal?: (proposal: CommandProposalPayload) => void
-  onComplete?: () => void
+  onStage?: (stageLabel: string, body: string) => void | Promise<void>
+  onToolSummary?: (toolLabel: string, toolSummary: string) => void | Promise<void>
+  onAssistantStart?: () => void | Promise<void>
+  onAssistantChunk: (chunk: string) => void | Promise<void>
+  onCommandProposal?: (proposal: CommandProposalPayload) => void | Promise<void>
+  onComplete?: () => void | Promise<void>
 }
 
 export interface ExecutionHandlers {
   onStatus?: (label: string) => void
-  onOutput: (stream: 'stdout' | 'stderr' | 'system', text: string) => void
+  onOutput: (stream: ExecutionOutputEntry['stream'], text: string) => void
   onReviewReady?: (files: ChangedFilePayload[]) => void
-  onComplete?: () => void
+  onComplete?: (status?: 'completed' | 'failed') => void
   onError?: () => void
 }
 
-const stageDelay = 260
-const chunkDelay = 90
-const executionDelay = 180
-
-function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
+interface AssistantStageResponse {
+  label: string
+  body: string
 }
 
-async function streamChunks(text: string, onChunk: (chunk: string) => void) {
-  const words = text.split(' ')
-  for (const word of words) {
-    onChunk(`${word} `)
-    await wait(chunkDelay)
+interface AssistantToolSummaryResponse {
+  toolLabel: string
+  toolSummary: string
+}
+
+interface AssistantTurnResponse {
+  stages: AssistantStageResponse[]
+  assistantMessage: string
+  toolSummary?: AssistantToolSummaryResponse | null
+  commandProposal?: CommandProposalPayload | null
+}
+
+interface ExecuteCommandResponse {
+  status: 'completed' | 'failed'
+  startedAt: string
+  completedAt: string
+  output: Array<{
+    stream: ExecutionOutputEntry['stream']
+    text: string
+    createdAt: string
+  }>
+  changedFiles: ChangedFilePayload[]
+}
+
+async function handleAssistantEvent(event: AssistantStreamEvent, handlers: AssistantStreamHandlers) {
+  switch (event.kind) {
+    case 'stage-status':
+      await handlers.onStage?.(event.stageLabel ?? 'Working', event.body ?? '')
+      break
+    case 'assistant-start':
+      await handlers.onAssistantStart?.()
+      break
+    case 'assistant-delta':
+      await handlers.onAssistantChunk(event.delta ?? '')
+      break
+    case 'tool-summary':
+      await handlers.onToolSummary?.(event.toolLabel ?? 'Tool summary', event.toolSummary ?? event.body ?? '')
+      break
+    case 'command-proposal':
+      if (event.commandProposal) {
+        await handlers.onCommandProposal?.(event.commandProposal)
+      }
+      break
+    case 'complete':
+      await handlers.onComplete?.()
+      break
+    case 'error':
+      throw new Error(event.error ?? 'Assistant stream failed.')
   }
 }
 
-function buildProjectResponse(input: AssistantStreamInput) {
-  return {
-    stages: [
-      {
-        label: 'Understanding request',
-        body: `I’m grounding the task against ${input.projectName ?? 'the active project'} and shaping the coding workflow.`,
-      },
-      {
-        label: 'Analyzing project',
-        body: 'I’m scanning the active context, keeping the request conversation-first, and identifying the safest path to a useful answer.',
-      },
-      {
-        label: 'Generating result',
-        body: `I found an impactful command path for: “${input.prompt}”. Review it before execution so the project context stays explicit and safe.`,
-      },
-    ],
-    proposal: {
-      summary: 'Run project analysis command',
-      command: `claude-code task --project "${input.projectPath ?? input.projectName ?? 'active-project'}" --prompt "${input.prompt.replace(/"/g, '\\"')}"`,
-      projectPath: input.projectPath ?? input.projectName ?? 'active-project',
-      workingDirectory: input.projectPath ?? input.projectName ?? 'active-project',
-      requiresApproval: true,
-    },
-    toolSummary: {
-      toolLabel: 'Task summary',
-      toolSummary: 'Prepared an impactful project command and paused for explicit approval before execution.',
-    },
+async function replayLegacyMockResponse(response: AssistantTurnResponse, handlers: AssistantStreamHandlers) {
+  for (const stage of response.stages) {
+    await handlers.onStage?.(stage.label, stage.body)
   }
-}
 
-function buildConversationResponse(input: AssistantStreamInput) {
-  return `Here’s a direct response to “${input.prompt}”. This conversation stays lightweight and chat-first while still preserving the current session transcript and streaming state.`
-}
+  await handlers.onAssistantStart?.()
+  await handlers.onAssistantChunk(response.assistantMessage)
 
-function buildChangedFiles(): ChangedFilePayload[] {
-  return [
-    {
-      path: 'src/app/layout/CenterWorkspace.tsx',
-      summary: 'Add review surface summary to the conversation shell.',
-      diff: `@@ -320,6 +320,12 @@\n- <Transcript ... />\n+ <ReviewSummary ... />\n+ <Transcript ... />`,
-    },
-    {
-      path: 'src/app/layout/BottomPanel.tsx',
-      summary: 'Expose changed files and diff preview in the bottom panel.',
-      diff: `@@ -22,6 +22,18 @@\n- <div className="bottom-panel__content">\n+ <div className="bottom-panel__tabs">\n+   <button>Output</button>\n+   <button>Review</button>\n+ </div>`,
-    },
-  ]
+  if (response.commandProposal) {
+    await handlers.onCommandProposal?.(response.commandProposal)
+  }
+
+  if (response.toolSummary) {
+    await handlers.onToolSummary?.(response.toolSummary.toolLabel, response.toolSummary.toolSummary)
+  }
+
+  await handlers.onComplete?.()
 }
 
 export async function streamAssistantResponse(input: AssistantStreamInput, handlers: AssistantStreamHandlers) {
-  if (input.mode === 'project') {
-    const response = buildProjectResponse(input)
-
-    for (let index = 0; index < response.stages.length; index += 1) {
-      const stage = response.stages[index]
-      handlers.onStage?.(stage.label, stage.body)
-      await wait(stageDelay)
-
-      if (index === response.stages.length - 1) {
-        handlers.onAssistantStart?.()
-        await streamChunks(stage.body, handlers.onAssistantChunk)
-      }
+  const mocks = getAssistantMocks()
+  if (mocks?.assistantStreamEvents?.length) {
+    for (const event of mocks.assistantStreamEvents) {
+      await handleAssistantEvent(event, handlers)
     }
-
-    handlers.onCommandProposal?.(response.proposal)
-    handlers.onToolSummary?.(response.toolSummary.toolLabel, response.toolSummary.toolSummary)
-    handlers.onComplete?.()
     return
   }
 
-  handlers.onAssistantStart?.()
-  await streamChunks(buildConversationResponse(input), handlers.onAssistantChunk)
-  handlers.onComplete?.()
+  if (mocks?.assistantTurnResponse) {
+    await replayLegacyMockResponse(mocks.assistantTurnResponse, handlers)
+    return
+  }
+
+  let unlisten: UnlistenFn | null = null
+
+  try {
+    const turnId = input.turnId ?? crypto.randomUUID()
+
+    await new Promise<void>(async (resolve, reject) => {
+      let settled = false
+
+      const finalize = (callback: () => void) => {
+        if (settled) {
+          return
+        }
+        settled = true
+        callback()
+      }
+
+      try {
+        unlisten = await listen<AssistantStreamEvent>(ASSISTANT_STREAM_EVENT, (message) => {
+          const event = message.payload
+          if (!event || event.turnId !== turnId) {
+            return
+          }
+
+          void (async () => {
+            try {
+              await handleAssistantEvent(event, handlers)
+              if (event.kind === 'complete') {
+                finalize(resolve)
+              }
+            } catch (error) {
+              finalize(() => reject(error))
+            }
+          })()
+        })
+
+        const response = await invoke<AssistantStreamStartResponse>('start_assistant_turn_stream', {
+          input: {
+            ...input,
+            turnId,
+          },
+        })
+
+        if (response.turnId !== turnId) {
+          finalize(() => reject(new Error(`Assistant stream turn mismatch: expected ${turnId}, received ${response.turnId}`)))
+        }
+      } catch (error) {
+        finalize(() => reject(error))
+      }
+    })
+  } finally {
+    const cleanup = unlisten as (() => void) | null
+    if (typeof cleanup === 'function') {
+      cleanup()
+    }
+  }
 }
 
-export async function runApprovedCommand(command: string, handlers: ExecutionHandlers) {
-  handlers.onStatus?.('Starting command')
-  handlers.onOutput('system', `Preparing execution for: ${command}`)
-  await wait(executionDelay)
-  handlers.onOutput('stdout', 'Inspecting project context...')
-  await wait(executionDelay)
-  handlers.onStatus?.('Running command')
-  handlers.onOutput('stdout', 'Running assistant-driven command safely inside the active working directory...')
-  await wait(executionDelay)
-  handlers.onOutput('stdout', 'Collecting command results and updating session timeline...')
-  await wait(executionDelay)
-  handlers.onReviewReady?.(buildChangedFiles())
-  handlers.onOutput('system', 'Execution finished successfully.')
-  handlers.onComplete?.()
+export async function runApprovedCommand(
+  command: string,
+  projectPath: string,
+  workingDirectory: string,
+  handlers: ExecutionHandlers,
+) {
+  handlers.onStatus?.('Execution running')
+
+  const mocks = getAssistantMocks()
+  const response = mocks
+    ? mocks.executeCommandResponse
+    : await invoke<ExecuteCommandResponse>('execute_approved_command', {
+        input: {
+          command,
+          projectPath,
+          workingDirectory,
+        },
+      })
+
+  for (const entry of response.output) {
+    handlers.onOutput(entry.stream, entry.text)
+  }
+
+  if (response.changedFiles.length > 0) {
+    handlers.onReviewReady?.(response.changedFiles)
+  }
+
+  if (response.status === 'failed') {
+    handlers.onComplete?.('failed')
+    handlers.onError?.()
+    return
+  }
+
+  handlers.onComplete?.('completed')
 }

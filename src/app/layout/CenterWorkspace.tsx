@@ -1,7 +1,28 @@
-import { AlertTriangle, ArrowUp, FileText, SendHorizontal, ShieldAlert } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+  FileImage,
+  FilePlus2,
+  FileText,
+  FolderOpen,
+  MessageSquare,
+  SendHorizontal,
+  ShieldAlert,
+  X,
+} from 'lucide-react'
 import { FormEvent, KeyboardEvent } from 'react'
+import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
-import type { SessionTranscriptEvent } from '../state/types'
+import type {
+  DesktopChooserRow,
+  DesktopSessionHeader,
+  DesktopWorkflowStatus,
+  RecoverySpotlight,
+  SessionAttachment,
+  SessionTranscriptEvent,
+  WorkspaceSummaryViewModel,
+} from '../state/types'
 
 function formatRelativeTime(timestamp: string) {
   const delta = Date.now() - Number(timestamp)
@@ -19,17 +40,45 @@ function formatRelativeTime(timestamp: string) {
   return `${days}d ago`
 }
 
-function formatStatusLabel(status: 'active' | 'idle' | 'needs-attention' | 'complete') {
-  switch (status) {
-    case 'needs-attention':
-      return 'Needs attention'
-    case 'complete':
-      return 'Complete'
-    case 'idle':
-      return 'Idle'
-    default:
-      return 'Active'
+function classNames(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(' ')
+}
+
+function statusTone(status: DesktopWorkflowStatus) {
+  if (status === 'Awaiting approval') {
+    return 'warning'
   }
+
+  if (status === 'Failed' || status === 'Needs attention') {
+    return 'danger'
+  }
+
+  if (status === 'Review ready') {
+    return 'review'
+  }
+
+  if (status === 'Connected' || status === 'Attached' || status === 'Working') {
+    return 'accent'
+  }
+
+  return 'neutral'
+}
+
+function EventAttachments({ attachments }: { attachments?: SessionAttachment[] }) {
+  if (!attachments || attachments.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="conversation-attachments">
+      {attachments.map((attachment) => (
+        <div key={attachment.id} className="conversation-attachment-chip">
+          <strong>{attachment.name}</strong>
+          <span>{attachment.kind}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function EventRow({ event, mode }: { event: SessionTranscriptEvent; mode: 'project' | 'conversation' }) {
@@ -57,7 +106,7 @@ function EventRow({ event, mode }: { event: SessionTranscriptEvent; mode: 'proje
   if (event.kind === 'approval-request') {
     return (
       <div className="conversation-event conversation-event--approval">
-        <span className="conversation-event__eyebrow">Approval required</span>
+        <span className="conversation-event__eyebrow">Awaiting approval</span>
         <p>{event.body}</p>
       </div>
     )
@@ -73,9 +122,20 @@ function EventRow({ event, mode }: { event: SessionTranscriptEvent; mode: 'proje
   }
 
   if (event.kind === 'execution-update') {
+    const executionLabel =
+      event.executionStatus === 'failed'
+        ? 'Failed'
+        : event.executionStatus === 'running'
+          ? 'Working'
+          : event.executionStatus === 'completed'
+            ? 'Completed'
+            : event.executionStatus === 'rejected'
+              ? 'Rejected'
+              : 'Execution update'
+
     return (
       <div className="conversation-event conversation-event--execution">
-        <span className="conversation-event__eyebrow">{event.executionStatus ?? 'Execution update'}</span>
+        <span className="conversation-event__eyebrow">{executionLabel}</span>
         <p>{event.body}</p>
       </div>
     )
@@ -84,7 +144,7 @@ function EventRow({ event, mode }: { event: SessionTranscriptEvent; mode: 'proje
   if (event.kind === 'review-available') {
     return (
       <div className="conversation-event conversation-event--review">
-        <span className="conversation-event__eyebrow">Review available</span>
+        <span className="conversation-event__eyebrow">Review ready</span>
         <p>{event.body}</p>
       </div>
     )
@@ -98,11 +158,17 @@ function EventRow({ event, mode }: { event: SessionTranscriptEvent; mode: 'proje
     >
       <span className="conversation-message__role">{event.displayRole === 'user' ? 'You' : 'Assistant'}</span>
       <p>{event.body}</p>
+      <EventAttachments attachments={event.attachments} />
     </div>
   )
 }
 
-function Transcript({ events, mode, assistantStatus, currentStageLabel }: {
+function Transcript({
+  events,
+  mode,
+  assistantStatus,
+  currentStageLabel,
+}: {
   events: SessionTranscriptEvent[]
   mode: 'project' | 'conversation'
   assistantStatus: 'idle' | 'streaming' | 'error'
@@ -111,11 +177,11 @@ function Transcript({ events, mode, assistantStatus, currentStageLabel }: {
   if (events.length === 0) {
     return (
       <div className="conversation-empty">
-        <h3>{mode === 'project' ? 'Start a coding task' : 'Start a conversation'}</h3>
+        <h3>{mode === 'project' ? 'Start a coding session' : 'Start a conversation'}</h3>
         <p>
           {mode === 'project'
-            ? 'Describe the task you want handled in the active project. The assistant will stream progress and keep the result in this session.'
-            : 'Ask a question or explore an idea without selecting a project folder.'}
+            ? 'Describe the task for this workspace to begin an attached coding session.'
+            : 'Send a message without opening a workspace.'}
         </p>
       </div>
     )
@@ -128,15 +194,274 @@ function Transcript({ events, mode, assistantStatus, currentStageLabel }: {
       ))}
       {assistantStatus === 'streaming' ? (
         <div className="conversation-streaming-indicator">
-          <strong>{currentStageLabel ?? 'Responding'}</strong>
-          <span>{mode === 'project' ? 'Streaming project-aware response…' : 'Streaming response…'}</span>
+          <strong>{currentStageLabel ?? 'Working'}</strong>
+          <span>{mode === 'project' ? 'Streaming coding session updates.' : 'Streaming conversation updates.'}</span>
         </div>
       ) : null}
     </div>
   )
 }
 
-function ApprovalCard({
+function StatusChip({ status }: { status: DesktopWorkflowStatus }) {
+  return <span className={`workspace__status-pill workspace__status-pill--${statusTone(status)}`}>{status}</span>
+}
+
+function AttentionMarker({ attention }: { attention: DesktopChooserRow['attention'] }) {
+  if (!attention) {
+    return null
+  }
+
+  const label =
+    attention === 'approval'
+      ? 'Approval'
+      : attention === 'review'
+        ? 'Review'
+        : attention === 'failure'
+          ? 'Failed'
+          : 'Recovery'
+
+  return <span className={`workspace__attention-marker workspace__attention-marker--${attention}`}>{label}</span>
+}
+
+function WorkspaceSummaryCard({
+  workspace,
+  onStartNew,
+}: {
+  workspace: WorkspaceSummaryViewModel | null
+  onStartNew: () => Promise<void>
+}) {
+  if (!workspace) {
+    return null
+  }
+
+  return (
+    <section className="workspace__summary-card">
+      <div>
+        <span className="workspace__eyebrow">Current workspace</span>
+        <h2>{workspace.projectName}</h2>
+        <p>{workspace.summary}</p>
+      </div>
+      <div className="workspace__summary-meta">
+        <div>
+          <span>Path</span>
+          <strong>{workspace.projectPath}</strong>
+        </div>
+        <div>
+          <span>Status</span>
+          <strong>{workspace.workflowStatus}</strong>
+        </div>
+        <div>
+          <span>Sessions</span>
+          <strong>{workspace.sessionCount}</strong>
+        </div>
+      </div>
+      {workspace.sessionCount === 0 ? (
+        <div className="workspace__summary-actions">
+          <button className="workspace__primary-action" onClick={() => onStartNew().catch(() => undefined)}>
+            Start new session
+          </button>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+function RecoveryCallout({
+  spotlight,
+  onResume,
+  onOpenChooser,
+}: {
+  spotlight: RecoverySpotlight
+  onResume: (sessionId: string) => Promise<void>
+  onOpenChooser: () => void
+}) {
+  return (
+    <section className="workspace__recovery">
+      <div className="workspace__recovery-header">
+        <div>
+          <span className="workspace__eyebrow">Recovery available</span>
+          <h2>{spotlight.title}</h2>
+          <p>Resume the last attached coding session or open the full chooser.</p>
+        </div>
+        <StatusChip status={spotlight.workflowStatus} />
+      </div>
+      <div className="workspace__recovery-grid">
+        <div>
+          <span>Workspace</span>
+          <strong>{spotlight.projectName}</strong>
+        </div>
+        <div>
+          <span>Model</span>
+          <strong>{spotlight.effectiveModelId}</strong>
+        </div>
+        <div>
+          <span>Last activity</span>
+          <strong>{formatRelativeTime(spotlight.lastActivityAt)}</strong>
+        </div>
+        <div>
+          <span>Workflow state</span>
+          <strong>{spotlight.workflowStatus}</strong>
+        </div>
+      </div>
+      {spotlight.recentActivity ? <p className="workspace__recovery-summary">{spotlight.recentActivity.summary}</p> : null}
+      <div className="workspace__recovery-actions">
+        <button className="workspace__primary-action" onClick={() => onResume(spotlight.sessionId).catch(() => undefined)}>
+          Resume session
+        </button>
+        <button className="workspace__secondary-action" onClick={onOpenChooser}>
+          Open session chooser
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function ResumeSessionSpotlight({ row, onOpen }: { row: DesktopChooserRow; onOpen: (sessionId: string) => Promise<void> }) {
+  const actionLabel = row.primaryAction === 'attach' ? 'Attach' : 'Resume'
+
+  return (
+    <section className="workspace__spotlight">
+      <div className="workspace__spotlight-copy">
+        <span className="workspace__eyebrow">Resume session</span>
+        <div className="workspace__spotlight-title-row">
+          <h3>{row.title}</h3>
+          <StatusChip status={row.workflowStatus} />
+        </div>
+        <p>{row.summary}</p>
+      </div>
+      <div className="workspace__spotlight-meta">
+        <span>{row.projectName}</span>
+        <span>{row.modelId}</span>
+        <span>{formatRelativeTime(row.lastActivityAt)}</span>
+        <AttentionMarker attention={row.attention} />
+      </div>
+      <div className="workspace__spotlight-actions">
+        <button className="workspace__primary-action" onClick={() => onOpen(row.sessionId).catch(() => undefined)}>
+          {actionLabel}
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function SessionRow({ row, onOpen }: { row: DesktopChooserRow; onOpen: (sessionId: string) => Promise<void> }) {
+  const actionLabel = row.primaryAction === 'attach' ? 'Attach' : 'Resume'
+
+  return (
+    <button className={classNames('workspace__session-row', row.isActive && 'workspace__session-row--active')} onClick={() => onOpen(row.sessionId)}>
+      <div className="workspace__session-header">
+        <div className="workspace__session-title-wrap">
+          <strong>{row.title}</strong>
+          <AttentionMarker attention={row.attention} />
+        </div>
+        <StatusChip status={row.workflowStatus} />
+      </div>
+      <p className="workspace__session-summary">{row.summary}</p>
+      <div className="workspace__session-meta">
+        <span>{row.projectName}</span>
+        <span>{row.modelId}</span>
+        <span>{formatRelativeTime(row.lastActivityAt)}</span>
+      </div>
+      <div className="workspace__session-action-row">
+        <span className="workspace__session-action-label">{actionLabel}</span>
+        <ArrowUpRight size={14} />
+      </div>
+    </button>
+  )
+}
+
+function SessionList({
+  rows,
+  onResume,
+}: {
+  rows: DesktopChooserRow[]
+  onResume: (sessionId: string) => Promise<void>
+}) {
+  return (
+    <section className="workspace__chooser-section">
+      <div className="workspace__section-heading">
+        <div>
+          <span className="workspace__eyebrow">Recent sessions</span>
+          <h3>Choose a coding session</h3>
+        </div>
+      </div>
+      <div className="workspace__history-list" role="list" aria-label="Recent sessions">
+        {rows.map((row) => (
+          <SessionRow key={row.sessionId} row={row} onOpen={onResume} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function NoWorkspaceState({
+  onOpenWorkspace,
+  onConversation,
+}: {
+  onOpenWorkspace: () => void
+  onConversation: () => Promise<void>
+}) {
+  return (
+    <section className="workspace__surface workspace__surface--empty workspace__surface--hero">
+      <span className="workspace__eyebrow">Workspace required</span>
+      <h2>No workspace selected</h2>
+      <p>Open a local workspace to resume a coding session, attach to recent work, or start a new session.</p>
+      <div className="workspace__state-actions workspace__state-actions--hero">
+        <button className="workspace__primary-action" onClick={onOpenWorkspace}>
+          <FolderOpen size={14} />
+          <span>Open workspace</span>
+        </button>
+      </div>
+      <button className="workspace__conversation-entry" onClick={() => onConversation().catch(() => undefined)}>
+        <MessageSquare size={14} />
+        <span>Send message without opening a workspace</span>
+      </button>
+    </section>
+  )
+}
+
+function RecoveryFailedState({
+  message,
+  onOpenChooser,
+  onStartNew,
+}: {
+  message: string | null
+  onOpenChooser: () => void
+  onStartNew: () => Promise<void>
+}) {
+  return (
+    <section className="workspace__surface workspace__surface--state">
+      <span className="workspace__eyebrow">Recovery issue</span>
+      <h2>Session recovery failed</h2>
+      <p>{message ?? 'We couldn’t load local session data. Retry the chooser, or start a new session for this workspace.'}</p>
+      <div className="workspace__state-actions">
+        <button className="workspace__primary-action" onClick={onOpenChooser}>
+          Open session chooser
+        </button>
+        <button className="workspace__secondary-action" onClick={() => onStartNew().catch(() => undefined)}>
+          Start new session
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function NoSessionsState({ onStartNew }: { onStartNew: () => Promise<void> }) {
+  return (
+    <section className="workspace__surface workspace__surface--state">
+      <span className="workspace__eyebrow">Session chooser</span>
+      <h2>No sessions yet</h2>
+      <p>Start a new session for this workspace, or switch workspaces to reopen earlier work.</p>
+      <div className="workspace__state-actions">
+        <button className="workspace__primary-action" onClick={() => onStartNew().catch(() => undefined)}>
+          Start new session
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function InlineApprovalSummary({
   onApprove,
   onReject,
 }: {
@@ -155,29 +480,81 @@ function ApprovalCard({
         <div>
           <span className="conversation-event__eyebrow workspace__inline-badge">
             <ShieldAlert size={13} />
-            <span>Impactful command</span>
+            <span>Awaiting approval</span>
           </span>
           <h3>{pendingProposal.summary}</h3>
         </div>
-        <span className="workspace__mode-pill">Needs review</span>
+        <StatusChip status="Awaiting approval" />
       </div>
-      <p className="workspace__inline-copy">Review the command details in the bottom utility tray, then approve or reject here.</p>
+      <p className="workspace__inline-copy">
+        Review the command details in the bottom panel, then approve or reject the command for this workspace.
+      </p>
       <div className="approval-card__actions">
         <button className="workspace__secondary-action" onClick={() => onReject().catch(() => undefined)}>
-          Reject
+          Reject command
         </button>
         <button className="workspace__primary-action" onClick={() => onApprove().catch(() => undefined)}>
-          Approve & Run
+          Approve and run
         </button>
       </div>
     </div>
   )
 }
 
-function ReviewSummary() {
+function InlineWorkflowStatusSummary() {
+  const { executionRecord } = useAppShellStore()
+
+  if (!executionRecord || executionRecord.status === 'awaiting-approval' || executionRecord.reviewState === 'ready') {
+    return null
+  }
+
+  const statusLabel =
+    executionRecord.status === 'running'
+      ? 'Working'
+      : executionRecord.status === 'rejected'
+        ? 'Attached'
+        : executionRecord.status === 'failed'
+          ? 'Failed'
+          : executionRecord.reviewState === 'unavailable'
+            ? 'Attached'
+            : executionRecord.status === 'completed'
+              ? 'Attached'
+              : 'Ready'
+
+  const helperCopy =
+    executionRecord.status === 'running'
+      ? 'Command execution is in progress. Follow detailed output in the bottom panel while the session stays attached.'
+      : executionRecord.status === 'rejected'
+        ? 'The command was rejected before execution. You can continue the session or send a revised instruction.'
+        : executionRecord.status === 'failed'
+          ? 'Execution stopped before completion. Review the bottom panel output, then continue from the same session.'
+          : executionRecord.reviewState === 'unavailable'
+            ? executionRecord.reviewUnavailableMessage ?? 'Execution completed, but review artifacts were unavailable for this workspace.'
+            : executionRecord.reviewState === 'empty'
+              ? 'Execution finished without changed files. You can continue the session or inspect the output for more detail.'
+              : 'Execution finished and the session is ready for the next step.'
+
+  return (
+    <div className={`workspace__inline-surface workspace__inline-surface--status ${executionRecord.reviewState === 'unavailable' ? 'workspace__inline-surface--warning' : ''}`}>
+      <div className="workspace__inline-surface-header">
+        <div>
+          <span className="conversation-event__eyebrow workspace__inline-badge">
+            <FileText size={13} />
+            <span>{executionRecord.reviewState === 'unavailable' ? 'Review unavailable' : statusLabel}</span>
+          </span>
+          <h3>{executionRecord.summary}</h3>
+        </div>
+        <StatusChip status={statusLabel as DesktopWorkflowStatus} />
+      </div>
+      <p className="workspace__inline-copy">{helperCopy}</p>
+    </div>
+  )
+}
+
+function InlineReviewSummary() {
   const { executionRecord, selectReviewFile } = useAppShellStore()
 
-  if (!executionRecord || executionRecord.changedFiles.length === 0) {
+  if (!executionRecord || executionRecord.reviewState !== 'ready' || executionRecord.changedFiles.length === 0) {
     return null
   }
 
@@ -191,8 +568,9 @@ function ReviewSummary() {
           </span>
           <h3>{executionRecord.changedFiles.length} changed files available</h3>
         </div>
-        <span className="workspace__mode-pill workspace__mode-pill--chat">Open review</span>
+        <StatusChip status="Review ready" />
       </div>
+      <p className="workspace__inline-copy">Open review in the bottom panel to inspect changed files and continue the session.</p>
       <div className="review-summary-card__list review-summary-card__list--inline">
         {executionRecord.changedFiles.map((file) => (
           <button key={file.id} className="review-summary-card__file" onClick={() => selectReviewFile(file.id)}>
@@ -200,7 +578,10 @@ function ReviewSummary() {
               <strong>{file.path}</strong>
               <span>{file.summary}</span>
             </div>
-            <ArrowUp size={14} />
+            <span className="workspace__review-cta">
+              Open review
+              <ArrowRight size={14} />
+            </span>
           </button>
         ))}
       </div>
@@ -208,16 +589,63 @@ function ReviewSummary() {
   )
 }
 
+function CommandHint({ draftPrompt }: { draftPrompt: string }) {
+  const firstLine = draftPrompt.trim().split(/\n/)[0] ?? ''
+  if (!firstLine.startsWith('/')) {
+    return null
+  }
+
+  const commandName = firstLine.slice(1).split(/\s+/)[0] || 'command'
+  return (
+    <div className="composer__hint" role="status" aria-live="polite">
+      <strong>Slash command detected</strong>
+      <span>/{commandName} will be sent as Claude Code-style command input.</span>
+    </div>
+  )
+}
+
+function PendingAttachments({ attachments, onRemove }: { attachments: SessionAttachment[]; onRemove: (attachmentId: string) => void }) {
+  if (attachments.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="composer__attachments">
+      {attachments.map((attachment) => (
+        <div key={attachment.id} className="composer__attachment-chip">
+          <div>
+            <strong>{attachment.name}</strong>
+            <span>
+              {attachment.kind} · {attachment.source}
+            </span>
+          </div>
+          <button type="button" className="composer__attachment-remove" onClick={() => onRemove(attachment.id)}>
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function Composer({
   mode,
   draftPrompt,
+  pendingAttachments,
   setDraftPrompt,
+  addFileAttachments,
+  addImageAttachments,
+  removePendingAttachment,
   submitPrompt,
   disabled,
 }: {
   mode: 'project' | 'conversation'
   draftPrompt: string
+  pendingAttachments: SessionAttachment[]
   setDraftPrompt: (prompt: string) => void
+  addFileAttachments: () => Promise<void>
+  addImageAttachments: () => Promise<void>
+  removePendingAttachment: (attachmentId: string) => void
   submitPrompt: () => Promise<void>
   disabled: boolean
 }) {
@@ -233,8 +661,23 @@ function Composer({
     }
   }
 
+  const buttonLabel = mode === 'project' ? 'Send instruction' : 'Send message'
+
   return (
     <form className={`composer composer--${mode}`} onSubmit={handleSubmit}>
+      <CommandHint draftPrompt={draftPrompt} />
+      <div className="composer__toolbar">
+        <button className="workspace__secondary-action" type="button" onClick={() => addFileAttachments().catch(() => undefined)} disabled={disabled}>
+          <FilePlus2 size={14} />
+          <span>File</span>
+        </button>
+        <button className="workspace__secondary-action" type="button" onClick={() => addImageAttachments().catch(() => undefined)} disabled={disabled}>
+          <FileImage size={14} />
+          <span>Image</span>
+        </button>
+        <span className="composer__slash-hint">Type / to use slash commands</span>
+      </div>
+      <PendingAttachments attachments={pendingAttachments} onRemove={removePendingAttachment} />
       <div className="composer__field">
         <textarea
           id="assistant-prompt"
@@ -244,8 +687,8 @@ function Composer({
           onKeyDown={handleKeyDown}
           placeholder={
             mode === 'project'
-              ? 'Describe the coding task for the active project…'
-              : 'Send a message to the assistant…'
+              ? 'Describe the next task for this workspace.'
+              : 'Send a message to the assistant.'
           }
           rows={mode === 'project' ? 3 : 4}
           disabled={disabled}
@@ -254,257 +697,304 @@ function Composer({
           className="workspace__primary-action composer__send"
           type="submit"
           disabled={disabled || !draftPrompt.trim()}
-          aria-label={mode === 'project' ? 'Run task' : 'Send message'}
-          title={mode === 'project' ? 'Ctrl/Cmd + Enter sends task' : 'Ctrl/Cmd + Enter sends message'}
+          aria-label={buttonLabel}
+          title={mode === 'project' ? 'Ctrl/Cmd + Enter sends instruction' : 'Ctrl/Cmd + Enter sends message'}
         >
           <SendHorizontal size={15} />
         </button>
+      </div>
+      <div className="composer__footer">
+        <span>{buttonLabel}</span>
+        <span>Ctrl/Cmd + Enter</span>
       </div>
     </form>
   )
 }
 
+function SessionHeader({ header, mode }: { header: DesktopSessionHeader; mode: 'project' | 'conversation' }) {
+  return (
+    <div className="workspace__session-header-card">
+      <div className="workspace__session-header-main">
+        <div>
+          <span className="workspace__eyebrow">{mode === 'project' ? 'Attached session' : 'Conversation session'}</span>
+          <h2>{header.title}</h2>
+          <p>{header.currentActivitySummary ?? 'Ready to continue work.'}</p>
+        </div>
+        <StatusChip status={header.workflowStatus} />
+      </div>
+      <div className="workspace__session-meta-grid">
+        <div>
+          <span>Workspace</span>
+          <strong>{header.projectName}</strong>
+        </div>
+        <div>
+          <span>Model</span>
+          <strong>{header.modelId}</strong>
+        </div>
+        <div>
+          <span>Last activity</span>
+          <strong>{formatRelativeTime(header.lastActivityAt)}</strong>
+        </div>
+        <div>
+          <span>Session state</span>
+          <strong>{header.workflowStatus}</strong>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SessionSurface({
+  header,
+  mode,
+  transcript,
+  assistantStatus,
+  currentStageLabel,
+  draftPrompt,
+  pendingAttachments,
+  setDraftPrompt,
+  addFileAttachments,
+  addImageAttachments,
+  removePendingAttachment,
+  submitPrompt,
+  disabled,
+  approvePendingCommand,
+  rejectPendingCommand,
+}: {
+  header: DesktopSessionHeader
+  mode: 'project' | 'conversation'
+  transcript: SessionTranscriptEvent[]
+  assistantStatus: 'idle' | 'streaming' | 'error'
+  currentStageLabel: string | null
+  draftPrompt: string
+  pendingAttachments: SessionAttachment[]
+  setDraftPrompt: (prompt: string) => void
+  addFileAttachments: () => Promise<void>
+  addImageAttachments: () => Promise<void>
+  removePendingAttachment: (attachmentId: string) => void
+  submitPrompt: () => Promise<void>
+  disabled: boolean
+  approvePendingCommand: () => Promise<void>
+  rejectPendingCommand: () => Promise<void>
+}) {
+  return (
+    <section className="workspace__session-surface">
+      <SessionHeader header={header} mode={mode} />
+      <div className="workspace__conversation-body">
+        {mode === 'project' ? <InlineApprovalSummary onApprove={approvePendingCommand} onReject={rejectPendingCommand} /> : null}
+        {mode === 'project' ? <InlineWorkflowStatusSummary /> : null}
+        {mode === 'project' ? <InlineReviewSummary /> : null}
+        <Transcript
+          events={transcript}
+          mode={mode}
+          assistantStatus={assistantStatus}
+          currentStageLabel={currentStageLabel}
+        />
+      </div>
+      <Composer
+        mode={mode}
+        draftPrompt={draftPrompt}
+        pendingAttachments={pendingAttachments}
+        setDraftPrompt={setDraftPrompt}
+        addFileAttachments={addFileAttachments}
+        addImageAttachments={addImageAttachments}
+        removePendingAttachment={removePendingAttachment}
+        submitPrompt={submitPrompt}
+        disabled={disabled}
+      />
+    </section>
+  )
+}
+
 export function CenterWorkspace() {
   const {
-    activeProjectPath,
     activeSession,
     activeShellView,
     assistantError,
     assistantStatus,
     approvePendingCommand,
+    attemptRecovery,
+    createConversationSession,
+    createProjectSession,
     currentStageLabel,
     draftPrompt,
+    getDesktopWorkflow,
+    loadSessionHistory,
     mode,
+    pendingAttachments,
     pendingProposal,
     projectWarning,
     recoveryMessage,
-    recoveryStatus,
-    rejectPendingCommand,
-    resumeStatus,
-    sessionHistory,
-    sessionHistoryError,
-    sessionHistoryFilter,
-    sessionHistoryStatus,
-    createConversationSession,
-    createProjectSession,
-    loadSessionHistory,
+    removePendingAttachment,
     resumeSession,
+    setActiveProject,
     setDraftPrompt,
+    setShellView,
+    addFileAttachments,
+    addImageAttachments,
+    sessionHistoryError,
+    sessionHistoryStatus,
     submitPrompt,
+    rejectPendingCommand,
   } = useAppShellStore()
 
-  const filteredLabel =
-    sessionHistoryFilter.projectPath && activeProjectPath === sessionHistoryFilter.projectPath
-      ? 'Current project only'
-      : sessionHistoryFilter.projectPath
-        ? sessionHistoryFilter.projectPath
-        : 'All projects'
+  const desktopWorkflow = getDesktopWorkflow()
+  const { startupState, chooser, recovery, activeSessionHeader } = desktopWorkflow
+  const spotlightRow = chooser.spotlight && !chooser.spotlight.isActive ? chooser.spotlight : null
+  const recentRows = chooser.rows.filter((row) => row.sessionId !== spotlightRow?.sessionId)
+  const showProjectChooser = mode === 'project' && !activeSession && (startupState === 'chooser-ready' || activeShellView === 'project-sessions')
+  const showProjectSession = mode === 'project' && Boolean(activeSession && activeSessionHeader)
+  const showConversationSession = mode === 'conversation' && Boolean(activeSession && activeSessionHeader)
 
-  const activeSessionId = activeSession?.id ?? null
-  const showProjectConversation = mode === 'project' && activeShellView === 'project-sessions' && Boolean(activeSession)
-  const showConversationMode = mode === 'conversation'
+  const handleOpenWorkspace = async () => {
+    try {
+      const project = await pickProjectDirectory()
+      if (!project) {
+        return
+      }
+
+      setActiveProject(project)
+      await loadSessionHistory({ projectPath: project.path })
+    } catch {
+      console.error('Failed to open workspace')
+    }
+  }
 
   return (
     <div className="workspace">
       {projectWarning ? <div className="workspace__banner workspace__banner--warning">{projectWarning}</div> : null}
-      {recoveryMessage ? (
-        <div className={`workspace__banner workspace__banner--${recoveryStatus === 'error' ? 'error' : 'info'}`}>
-          <strong>{recoveryStatus === 'restored' ? 'Session restored' : recoveryStatus === 'error' ? 'Recovery issue' : 'Restoring session'}</strong>
-          <p>{recoveryMessage}</p>
-        </div>
-      ) : null}
       {assistantError ? (
         <div className="workspace__banner workspace__banner--error">
           <strong>
-            <AlertTriangle size={14} /> Assistant error
+            <AlertTriangle size={14} /> Assistant request failed
           </strong>
           <p>{assistantError}</p>
         </div>
       ) : null}
 
-      {showProjectConversation ? (
-        <section className="workspace__conversation-shell workspace__conversation-shell--project">
-          <div className="workspace__conversation-header workspace__conversation-header--compact">
-            <div>
-              <span className="workspace__eyebrow">Project workflow</span>
-              <h2>{activeSession?.title}</h2>
-              <p>
-                {activeSession?.projectName} · {formatStatusLabel(activeSession?.status ?? 'idle')} · {activeSession?.lastActivityAt ? formatRelativeTime(activeSession.lastActivityAt) : '—'}
-              </p>
-            </div>
-            <span className="workspace__mode-pill">Coding workflow</span>
-          </div>
-          <div className="workspace__conversation-body">
-            {pendingProposal ? <ApprovalCard onApprove={approvePendingCommand} onReject={rejectPendingCommand} /> : null}
-            <ReviewSummary />
-            <Transcript
-              events={activeSession?.transcript ?? []}
-              mode="project"
-              assistantStatus={assistantStatus}
-              currentStageLabel={currentStageLabel}
-            />
-          </div>
-          <Composer
-            mode="project"
-            draftPrompt={draftPrompt}
-            setDraftPrompt={setDraftPrompt}
-            submitPrompt={submitPrompt}
-            disabled={assistantStatus === 'streaming' || Boolean(pendingProposal)}
-          />
-        </section>
+      {startupState === 'recovery-available' && recovery.spotlight ? (
+        <RecoveryCallout
+          spotlight={recovery.spotlight}
+          onResume={resumeSession}
+          onOpenChooser={() => {
+            setShellView('project-sessions')
+            loadSessionHistory({ projectPath: recovery.spotlight?.projectPath ?? null }).catch(() => undefined)
+          }}
+        />
       ) : null}
 
-      {showConversationMode ? (
-        <section className="workspace__conversation-shell workspace__conversation-shell--chat">
-          <div className="workspace__conversation-header workspace__conversation-header--compact">
-            <div>
-              <span className="workspace__eyebrow">Conversation</span>
-              <h2>{activeSession?.title ?? 'Conversation'}</h2>
-              <p>
-                {activeSession
-                  ? `${formatStatusLabel(activeSession.status)} · ${formatRelativeTime(activeSession.lastActivityAt)}`
-                  : 'Start a lightweight assistant conversation without opening a project.'}
-              </p>
-            </div>
-            {!activeSession ? (
-              <button className="workspace__secondary-action" onClick={() => createConversationSession()}>
-                New Conversation
-              </button>
-            ) : null}
-          </div>
-          <div className="workspace__conversation-body">
-            <Transcript
-              events={activeSession?.transcript ?? []}
-              mode="conversation"
-              assistantStatus={assistantStatus}
-              currentStageLabel={currentStageLabel}
-            />
-          </div>
-          <Composer
-            mode="conversation"
-            draftPrompt={draftPrompt}
-            setDraftPrompt={setDraftPrompt}
-            submitPrompt={submitPrompt}
-            disabled={assistantStatus === 'streaming'}
-          />
-        </section>
+      {startupState === 'recovery-failed' ? (
+        <RecoveryFailedState
+          message={recoveryMessage}
+          onOpenChooser={() => {
+            setShellView('project-sessions')
+            loadSessionHistory().catch(() => undefined)
+          }}
+          onStartNew={createProjectSession}
+        />
       ) : null}
 
-      {activeShellView === 'project-sessions' && !activeSession ? (
-        <section className="workspace__surface workspace__surface--list">
+      {startupState === 'no-workspace' ? (
+        <NoWorkspaceState onOpenWorkspace={() => void handleOpenWorkspace()} onConversation={createConversationSession} />
+      ) : null}
+
+      {showProjectChooser ? (
+        <section className="workspace__chooser workspace__surface">
           <div className="workspace__surface-header">
             <div>
-              <span className="workspace__eyebrow">Project sessions</span>
-              <h2>Resume work or start fresh</h2>
-              <p>Pick up a previous session or create a new one for the active project.</p>
+              <span className="workspace__eyebrow">Session chooser</span>
+              <h2>Choose where to continue work</h2>
+              <p>Review the active workspace, resume a recent session, or start a new coding session.</p>
             </div>
-            <div className="workspace__history-actions">
-              <button className="workspace__primary-action" onClick={() => createProjectSession()} disabled={!activeProjectPath}>
-                New Session
-              </button>
-              {!activeProjectPath ? <span className="workspace__helper">Select a project before creating a session.</span> : null}
-            </div>
+            <StatusChip status={desktopWorkflow.desktopStatus} />
           </div>
 
-          <div className="workspace__filters">
-            <button
-              className={`workspace__filter-chip ${!sessionHistoryFilter.projectPath ? 'workspace__filter-chip--active' : ''}`}
-              onClick={() => loadSessionHistory({})}
-            >
-              All projects
-            </button>
-            <button
-              className={`workspace__filter-chip ${sessionHistoryFilter.projectPath ? 'workspace__filter-chip--active' : ''}`}
-              onClick={() => loadSessionHistory(activeProjectPath ? { projectPath: activeProjectPath } : {})}
-              disabled={!activeProjectPath}
-            >
-              {activeProjectPath ? 'Current project only' : 'No project selected'}
-            </button>
-          </div>
+          <WorkspaceSummaryCard workspace={desktopWorkflow.activeWorkspace} onStartNew={createProjectSession} />
 
-          {resumeStatus === 'loading' ? (
-            <div className="workspace__inline-banner">
-              <strong>Restoring session</strong>
-              <p>Reloading project, model, and recent activity…</p>
-            </div>
-          ) : null}
-
-          {sessionHistoryStatus === 'loading' || recoveryStatus === 'recovering' ? (
-            <div className="workspace__history-list">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="workspace__session-row workspace__session-row--loading" aria-hidden="true">
-                  <div className="workspace__skeleton workspace__skeleton--title" />
-                  <div className="workspace__skeleton workspace__skeleton--body" />
-                  <div className="workspace__skeleton workspace__skeleton--meta" />
-                </div>
-              ))}
-            </div>
-          ) : null}
+          {spotlightRow ? <ResumeSessionSpotlight row={spotlightRow} onOpen={resumeSession} /> : null}
 
           {sessionHistoryStatus === 'error' ? (
             <div className="workspace__state-card workspace__state-card--error">
-              <h3>We couldn’t load session history.</h3>
-              <p>{sessionHistoryError ?? 'Try again, and if the problem persists restart the app to reload local session data.'}</p>
-              <button className="workspace__secondary-action" onClick={() => loadSessionHistory(sessionHistoryFilter)}>
-                Reload History
+              <h3>We couldn’t load session history</h3>
+              <p>{sessionHistoryError ?? 'Retry the chooser, or restart the app to reload local session data.'}</p>
+              <button className="workspace__secondary-action" onClick={() => loadSessionHistory().catch(() => undefined)}>
+                Reload history
               </button>
             </div>
           ) : null}
 
-          {sessionHistoryStatus === 'ready' && sessionHistory.length === 0 ? (
-            <div className="workspace__state-card">
-              <h3>No sessions for this view yet</h3>
-              <p>Start a new session for the selected project, or clear the filter to reopen earlier work.</p>
-              <div className="workspace__state-actions">
-                <button className="workspace__primary-action" onClick={() => createProjectSession()} disabled={!activeProjectPath}>
-                  New Session
-                </button>
-                {sessionHistoryFilter.projectPath ? (
-                  <button className="workspace__secondary-action" onClick={() => loadSessionHistory({})}>
-                    Clear Filter
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
+          {sessionHistoryStatus !== 'error' && !chooser.hasSessions ? <NoSessionsState onStartNew={createProjectSession} /> : null}
 
-          {sessionHistoryStatus === 'ready' && sessionHistory.length > 0 ? (
-            <div className="workspace__history-list" role="list" aria-label={`Session history filtered by ${filteredLabel}`}>
-              {sessionHistory.map((session) => {
-                const isActive = session.id === activeSessionId
-                return (
-                  <button
-                    key={session.id}
-                    className={`workspace__session-row ${isActive ? 'workspace__session-row--active' : ''}`}
-                    onClick={() => resumeSession(session.id)}
-                  >
-                    <div className="workspace__session-header">
-                      <strong>{session.title}</strong>
-                      <span className="workspace__status-pill">{formatStatusLabel(session.status)}</span>
-                    </div>
-                    <p className="workspace__session-summary">{session.recentActivity?.summary ?? 'No recent activity summary yet.'}</p>
-                    <div className="workspace__session-meta">
-                      <span>{session.projectName}</span>
-                      <span>{session.effectiveModelId}</span>
-                      <span>{formatRelativeTime(session.lastActivityAt)}</span>
-                    </div>
-                  </button>
-                )
-              })}
+          {recentRows.length > 0 ? <SessionList rows={recentRows} onResume={resumeSession} /> : null}
+
+          <div className="workspace__new-session-bar">
+            <div>
+              <span className="workspace__eyebrow">New session</span>
+              <h3>Start new session</h3>
+              <p>Open a clean coding session for the current workspace.</p>
             </div>
-          ) : null}
+            <button className="workspace__primary-action" onClick={() => createProjectSession().catch(() => undefined)}>
+              Start new session
+            </button>
+          </div>
+
+          <button className="workspace__conversation-entry" onClick={() => createConversationSession().catch(() => undefined)}>
+            <MessageSquare size={14} />
+            <span>Send message without switching the coding workspace</span>
+          </button>
         </section>
       ) : null}
 
-      {!showProjectConversation && !showConversationMode && activeShellView !== 'project-sessions' ? (
-        <section className="workspace__surface workspace__surface--empty">
-          <span className="workspace__eyebrow">{mode === 'project' ? 'Project workspace' : 'Conversation mode'}</span>
-          <h2>{mode === 'project' ? 'Select a project to begin' : 'Start a direct conversation'}</h2>
-          <p>
-            {mode === 'project'
-              ? 'Choose a local project folder to open project-aware sessions, coding workflows, and review surfaces.'
-              : 'Use conversation mode when you want a direct assistant exchange without binding to a project.'}
-          </p>
+      {showProjectSession && activeSession && activeSessionHeader ? (
+        <SessionSurface
+          header={activeSessionHeader}
+          mode="project"
+          transcript={activeSession.transcript}
+          assistantStatus={assistantStatus}
+          currentStageLabel={currentStageLabel}
+          draftPrompt={draftPrompt}
+          pendingAttachments={pendingAttachments}
+          setDraftPrompt={setDraftPrompt}
+          addFileAttachments={addFileAttachments}
+          addImageAttachments={addImageAttachments}
+          removePendingAttachment={removePendingAttachment}
+          submitPrompt={submitPrompt}
+          disabled={assistantStatus === 'streaming' || Boolean(pendingProposal)}
+          approvePendingCommand={approvePendingCommand}
+          rejectPendingCommand={rejectPendingCommand}
+        />
+      ) : null}
+
+      {showConversationSession && activeSession && activeSessionHeader ? (
+        <SessionSurface
+          header={activeSessionHeader}
+          mode="conversation"
+          transcript={activeSession.transcript}
+          assistantStatus={assistantStatus}
+          currentStageLabel={currentStageLabel}
+          draftPrompt={draftPrompt}
+          pendingAttachments={pendingAttachments}
+          setDraftPrompt={setDraftPrompt}
+          addFileAttachments={addFileAttachments}
+          addImageAttachments={addImageAttachments}
+          removePendingAttachment={removePendingAttachment}
+          submitPrompt={submitPrompt}
+          disabled={assistantStatus === 'streaming' || Boolean(pendingProposal)}
+          approvePendingCommand={approvePendingCommand}
+          rejectPendingCommand={rejectPendingCommand}
+        />
+      ) : null}
+
+      {!showProjectChooser && !showProjectSession && !showConversationSession && startupState !== 'no-workspace' && startupState !== 'recovery-failed' ? (
+        <section className="workspace__surface workspace__surface--state">
+          <span className="workspace__eyebrow">Workspace loading</span>
+          <h2>Loading workspace and recent sessions.</h2>
+          <p>{recovery.message ?? 'Restoring session context.'}</p>
+          <div className="workspace__state-actions">
+            <button className="workspace__secondary-action" onClick={() => attemptRecovery().catch(() => undefined)}>
+              Retry recovery
+            </button>
+          </div>
         </section>
       ) : null}
     </div>

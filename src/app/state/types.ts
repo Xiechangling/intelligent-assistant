@@ -6,6 +6,30 @@ export type ProjectWarningState = 'none' | 'non-standard'
 
 export type ModelId = 'claude-opus' | 'claude-sonnet' | 'claude-haiku'
 
+export type DesktopWorkflowStatus =
+  | 'Ready'
+  | 'Connecting'
+  | 'Connected'
+  | 'Attached'
+  | 'Working'
+  | 'Awaiting approval'
+  | 'Review ready'
+  | 'Failed'
+  | 'Needs attention'
+
+export type DesktopStartupState =
+  | 'recovery-available'
+  | 'chooser-ready'
+  | 'no-workspace'
+  | 'recovery-failed'
+  | 'active-session'
+
+export type DesktopTrayMode = 'approval' | 'output' | 'review' | 'collapsed'
+
+export type DesktopSessionAttention = 'approval' | 'review' | 'failure' | 'recovery' | null
+
+export type DesktopSessionAction = 'resume' | 'attach' | 'start-new'
+
 export interface ProjectRecord {
   name: string
   path: string | null
@@ -60,6 +84,8 @@ export interface ChangedFileReview {
   diff: string
 }
 
+export type ExecutionReviewState = 'pending' | 'ready' | 'empty' | 'unavailable'
+
 export type ExecutionStatus = 'idle' | 'awaiting-approval' | 'running' | 'completed' | 'rejected' | 'failed'
 
 export interface ExecutionRecord {
@@ -70,6 +96,8 @@ export interface ExecutionRecord {
   projectPath: string
   workingDirectory: string
   status: ExecutionStatus
+  reviewState: ExecutionReviewState
+  reviewUnavailableMessage: string | null
   output: ExecutionOutputEntry[]
   changedFiles: ChangedFileReview[]
   startedAt: string | null
@@ -87,7 +115,50 @@ export interface ReviewPreset {
 export interface SkillToggle {
   id: string
   label: string
+  description: string
   enabled: boolean
+}
+
+export interface ComposerInputSegment {
+  type: 'text' | 'command'
+  text: string
+  commandName?: string
+}
+
+export interface SessionAttachment {
+  id: string
+  kind: 'file' | 'image'
+  name: string
+  path: string
+  mimeType?: string
+  sizeBytes?: number
+  source: 'picker' | 'project' | 'paste' | 'drop'
+  status: 'ready' | 'missing' | 'error'
+}
+
+export type AssistantStreamEventKind =
+  | 'stage-status'
+  | 'assistant-start'
+  | 'assistant-delta'
+  | 'tool-summary'
+  | 'command-proposal'
+  | 'complete'
+  | 'error'
+
+export interface AssistantStreamEvent {
+  turnId: string
+  kind: AssistantStreamEventKind
+  stageLabel?: string
+  body?: string
+  delta?: string
+  toolLabel?: string
+  toolSummary?: string
+  commandProposal?: CommandProposal | null
+  error?: string
+}
+
+export interface AssistantStreamStartResponse {
+  turnId: string
 }
 
 export interface SessionTranscriptEvent {
@@ -102,6 +173,8 @@ export interface SessionTranscriptEvent {
   proposal?: CommandProposal
   approvalDecision?: ApprovalDecision
   executionStatus?: ExecutionStatus
+  inputSegments?: ComposerInputSegment[]
+  attachments?: SessionAttachment[]
 }
 
 export interface SessionRecentActivity {
@@ -147,4 +220,82 @@ export interface SessionRecoverySnapshot {
   restoredAt: string
   lastActivityAt: string
   recentActivity: SessionRecentActivity | null
+}
+
+export interface RecoverySpotlight {
+  sessionId: string
+  title: string
+  projectName: string
+  projectPath: string
+  effectiveModelId: ModelId
+  lastActivityAt: string
+  restoredAt?: string
+  recentActivity: SessionRecentActivity | null
+  workflowStatus: DesktopWorkflowStatus
+  primaryAction: 'resume'
+  secondaryAction: 'open-chooser'
+}
+
+export interface WorkspaceSummaryViewModel {
+  projectName: string
+  projectPath: string | null
+  warning: ProjectWarningState
+  sessionCount: number
+  workflowStatus: DesktopWorkflowStatus
+  summary: string
+}
+
+export interface DesktopSessionHeader {
+  sessionId: string
+  title: string
+  projectName: string
+  projectPath: string
+  modelId: ModelId
+  workflowStatus: DesktopWorkflowStatus
+  lastActivityAt: string
+  currentActivitySummary: string | null
+  attention: DesktopSessionAttention
+}
+
+export interface DesktopChooserRow {
+  sessionId: string
+  title: string
+  projectName: string
+  projectPath: string
+  modelId: ModelId
+  lastActivityAt: string
+  workflowStatus: DesktopWorkflowStatus
+  attention: DesktopSessionAttention
+  summary: string
+  primaryAction: DesktopSessionAction
+  isActive: boolean
+  isSpotlight: boolean
+  isRecoveryTarget: boolean
+}
+
+export interface DesktopChooserViewModel {
+  ready: boolean
+  workspaceSummary: WorkspaceSummaryViewModel | null
+  spotlight: DesktopChooserRow | null
+  rows: DesktopChooserRow[]
+  hasWorkspace: boolean
+  hasSessions: boolean
+  conversationEntryAvailable: boolean
+}
+
+export interface DesktopRecoveryViewModel {
+  state: DesktopStartupState
+  spotlight: RecoverySpotlight | null
+  message: string | null
+}
+
+export interface DesktopWorkflowViewModel {
+  startupState: DesktopStartupState
+  desktopStatus: DesktopWorkflowStatus
+  trayMode: DesktopTrayMode
+  recovery: DesktopRecoveryViewModel
+  chooser: DesktopChooserViewModel
+  activeWorkspace: WorkspaceSummaryViewModel | null
+  activeSessionHeader: DesktopSessionHeader | null
+  activeSessionAttention: DesktopSessionAttention
 }
