@@ -172,7 +172,7 @@ test('rejecting a proposal keeps the session active and records a rejected timel
   await page.locator('.bottom-panel__approval-actions').getByRole('button', { name: 'Reject command' }).click()
 
   await expect(page.locator('.bottom-panel__status')).toHaveText('Ready')
-  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Rejected')
+  await expect(page.locator('.workspace__inline-surface--status')).toContainText('The command was rejected before execution')
   await expect(page.locator('.conversation-transcript')).toContainText('Rejected')
   await expect(page.locator('.conversation-transcript')).toContainText('Command rejected before execution.')
   await expect(page.locator('.conversation-transcript')).toContainText('Command rejected. No execution started.')
@@ -221,7 +221,7 @@ test('approving a proposal records approval before execution result states', asy
   await page.locator('.bottom-panel__approval-actions').getByRole('button', { name: 'Approve and run' }).click()
 
   await expect(page.locator('.bottom-panel__status')).toHaveText('Execution complete')
-  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Build completed successfully.')
+  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Execution finished and the session is ready for the next step')
   await expect(page.locator('.right-panel__row').filter({ hasText: 'Status' })).toContainText('Execution complete')
   await expect(page.locator('.bottom-panel__status')).toHaveText('Execution complete')
   const transcriptText = await page.locator('.conversation-transcript').innerText()
@@ -277,7 +277,7 @@ test('failed execution keeps the session attached to the same context with visib
   await page.locator('.bottom-panel__approval-actions').getByRole('button', { name: 'Approve and run' }).click()
 
   await expect(page.locator('.bottom-panel__status')).toHaveText('Failed')
-  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Execution failed before completion.')
+  await expect(page.locator('.workspace__inline-surface--status')).toContainText('Execution stopped before completion')
   await expect(page.locator('.conversation-transcript')).toContainText('Execution failed.')
   await expect(page.locator('.bottom-panel__status')).toHaveText('Failed')
   await expect(page.locator('.bottom-panel__log-line--stderr')).toContainText('npm ERR! Missing script: "missing-script"')
