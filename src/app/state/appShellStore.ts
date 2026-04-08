@@ -11,6 +11,8 @@ import {
 } from '../services/sessionService'
 import type {
   AppMode,
+  ApprovalDecision,
+  CommandProposal,
   CredentialStatusSummary,
   DesktopChooserRow,
   DesktopChooserViewModel,
@@ -18,7 +20,11 @@ import type {
   DesktopSessionAttention,
   DesktopSessionHeader,
   DesktopStartupState,
+  DesktopTrayMode,
   DesktopWorkflowStatus,
+  DesktopWorkflowViewModel,
+  ExecutionOutputEntry,
+  ExecutionStatus,
   ModelId,
   ProjectRecord,
   SessionAttachment,
@@ -28,6 +34,7 @@ import type {
   SessionRecoverySnapshot,
   SessionTranscriptEvent,
   ShellView,
+  SkillToggle,
   WorkspaceSummaryViewModel,
 } from './types'
 
@@ -110,6 +117,7 @@ interface AppShellState {
   attemptRecovery: () => Promise<void>
   clearRecoveryMessage: () => void
   submitPrompt: () => Promise<void>
+  getDesktopWorkflow: () => DesktopWorkflowViewModel
   getChooserView: () => DesktopChooserViewModel
   getActiveSessionHeader: () => DesktopSessionHeader | null
 }
@@ -476,6 +484,32 @@ function buildChooserView(state: AppShellState): DesktopChooserViewModel {
     hasWorkspace: Boolean(state.activeProjectPath),
     hasSessions: rows.length > 0,
     conversationEntryAvailable: true,
+  }
+}
+
+function buildDesktopWorkflow(state: AppShellState): DesktopWorkflowViewModel {
+  const startupState = deriveStartupState(state)
+  const recovery = buildRecoveryView(state)
+  const chooser = buildChooserView(state)
+  const activeWorkspace = buildWorkspaceSummary(state)
+  const activeSessionHeader = buildActiveSessionHeader(state)
+  const desktopStatus = deriveDesktopStatus(state)
+
+  // Determine tray mode based on state (stub for now - will be implemented in Phase 9)
+  const trayMode: DesktopTrayMode = 'collapsed'
+
+  // Determine active session attention
+  const activeSessionAttention: DesktopSessionAttention = null
+
+  return {
+    startupState,
+    desktopStatus,
+    trayMode,
+    recovery,
+    chooser,
+    activeWorkspace,
+    activeSessionHeader,
+    activeSessionAttention,
   }
 }
 
@@ -1033,6 +1067,7 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
       await get().loadSessionHistory(get().sessionHistoryFilter)
     }
   },
+  getDesktopWorkflow: () => buildDesktopWorkflow(get()),
   getChooserView: () => buildChooserView(get()),
   getActiveSessionHeader: () => buildActiveSessionHeader(get()),
 }))

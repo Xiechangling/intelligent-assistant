@@ -8,7 +8,7 @@ interface KeybindingConfig {
 }
 
 export function useGlobalKeybindings(config: KeybindingConfig = { enabled: true, macOSOptionMapping: true }) {
-  const { createProjectSession, setRightPanelOpen, setRightPanelView, setActiveProject } = useAppShellStore()
+  const { createProjectSession, setActiveProject } = useAppShellStore()
 
   useEffect(() => {
     if (!config.enabled) {
@@ -16,10 +16,9 @@ export function useGlobalKeybindings(config: KeybindingConfig = { enabled: true,
     }
 
     const handleKeyDown = async (event: KeyboardEvent) => {
-      // macOS Option key mapping: Option+t = †, Option+o = ø, Option+e = ´ or é
+      // macOS Option key mapping: Option+t = †, Option+o = ø
       const isMacOptionT = config.macOSOptionMapping && event.key === '†'
       const isMacOptionO = config.macOSOptionMapping && event.key === 'ø'
-      const isMacOptionE = config.macOSOptionMapping && (event.key === '´' || event.key === 'é')
 
       // ctrl+t: 新建会话
       if ((event.ctrlKey && event.key === 't') || isMacOptionT) {
@@ -42,16 +41,10 @@ export function useGlobalKeybindings(config: KeybindingConfig = { enabled: true,
         return
       }
 
-      // ctrl+e: 打开设置
-      if ((event.ctrlKey && event.key === 'e') || isMacOptionE) {
-        event.preventDefault()
-        setRightPanelView('settings')
-        setRightPanelOpen(true)
-        return
-      }
+      // ctrl+e: Settings removed in Phase 8 - keybinding disabled
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [config.enabled, config.macOSOptionMapping, createProjectSession, setRightPanelOpen, setRightPanelView, setActiveProject])
+  }, [config.enabled, config.macOSOptionMapping, createProjectSession, setActiveProject])
 }
