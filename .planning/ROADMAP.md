@@ -1,252 +1,79 @@
-# Roadmap: v2.2 官方 Claude Code Desktop 体验对齐
+# Roadmap: v2.3 官方 Claude Code Desktop UI 完全复刻
 
-**Milestone:** v2.2  
-**Status:** completed  
-**Goal:** 将桌面应用从"控制台化"布局全面对齐到官方"内容优先、轻量 chrome"的单流式对话架构  
-**Timeline:** 12 days  
-**Created:** 2026-04-08  
-**Completed:** 2026-04-08
-
----
-
-## Overview
-
-基于 v2.1.88 功能完整的桌面应用，进行 UI/UX 层面的全面对齐。核心差异不在功能缺失，而在信息架构和视觉层级的重新分配。采用渐进式重构策略：保持 Zustand 状态管理，重点调整 UI 层组件结构。
-
-**关键策略：**
-- 保持所有功能入口（只调整位置不删除）
-- 内联卡片 + 托盘双轨平滑过渡
-- 先独立性强的区域（顶栏/左侧栏），再复杂的区域（中央工作区）
-- 保留桌面 GUI 优势（圆角/阴影/动画）
-
----
+**Milestone:** v2.3
+**Created:** 2026-04-08
+**Status:** Active
+**Granularity:** Standard
 
 ## Phases
 
-### Phase 1: 顶栏简化与视觉基础 ✅
-**Duration:** 2-3 days  
-**Priority:** HIGH  
-**Status:** completed
+- [ ] **Phase 7: 技术准备与基础组件** - 添加语音输入库，创建新 UI 组件基础设施
+- [ ] **Phase 8: 核心布局重构** - 实现极简顶栏、左侧栏重构、中央区域纯净化
+- [ ] **Phase 9: 增强交互功能** - 实现三模式切换、导航、搜索、增强输入框
+- [ ] **Phase 10: 视觉对齐与打磨** - 对齐官方视觉语言、空状态设计、细节动画
 
-**Goal:** 顶栏简化立即提升产品感，建立视觉基础设施为后续阶段铺路
+## Phase Details
 
-**Requirements:**
-- REQ-01: 顶栏简化为轻量 Chrome（48px，3 个元素）
-- REQ-05: 官方颜色语义化（permission/inactive/subtle/success）
-- REQ-06: 间距标准化（8px 基数）
-- REQ-07: 保留桌面 GUI 优势（圆角/阴影/动画）
-- REQ-09: Focus Ring 样式
-- REQ-11: 快捷键提示组件
+### Phase 7: 技术准备与基础组件
+**Goal**: 添加必需依赖，创建新 UI 组件的基础设施，验证技术可行性
+**Depends on**: Nothing (first phase of v2.3)
+**Requirements**: TECH-01, TECH-02, TECH-03, TECH-04
+**Success Criteria** (what must be TRUE):
+  1. 用户可以通过语音输入按钮触发语音识别（Web Speech API 集成验证）
+  2. 用户可以拖拽文件到输入框区域添加附件（Tauri drag-drop API 验证）
+  3. ModeTabs 组件可以渲染三个模式标签（Chat/Cowork/Code）
+  4. VoiceInput 组件可以显示语音输入按钮并响应点击
+  5. AttachmentList 组件可以显示附件列表并支持删除操作
+**Plans**: TBD
 
-**Plans:** 2 plans
-- [x] 01-01-PLAN.md — 建立视觉基础设施（颜色 token、间距系统、focus ring、KeyboardShortcutHint）
-- [x] 01-02-PLAN.md — 简化顶栏为轻量 chrome（48px，3 元素布局）
+### Phase 8: 核心布局重构
+**Goal**: 实现官方 UI 的核心布局结构，移除旧功能，建立新的信息架构
+**Depends on**: Phase 7
+**Requirements**: LAYOUT-01, LAYOUT-02, LAYOUT-03, LAYOUT-04, REMOVE-01, REMOVE-02, REMOVE-03, REMOVE-04, REMOVE-05
+**Success Criteria** (what must be TRUE):
+  1. 用户看到极简顶栏（窗口控制 + 前进后退 + 三模式标签），不再有旧的顶部工具栏
+  2. 用户看到重构后的左侧栏（顶部操作区 + Projects 列表 + Sessions 列表），固定宽度 360px
+  3. 用户看到纯净的中央对话区域，右侧抽屉、底部托盘、审批面板、审查面板已完全移除
+  4. 用户调整窗口大小时，左侧栏保持固定宽度，中央区域自适应
+**Plans**: TBD
 
-**Success Criteria:**
-- 顶栏高度 48px，仅 3 个元素
-- 新增 4 个官方颜色 token
-- 所有间距为 8px 倍数
-- 所有可聚焦元素有 focus ring
-- E2E 测试通过
+### Phase 9: 增强交互功能
+**Goal**: 实现官方 UI 的核心交互功能，包括三模式切换、导航、搜索、增强输入框
+**Depends on**: Phase 8
+**Requirements**: INTERACT-01, INTERACT-02, INTERACT-03, INTERACT-04, INTERACT-05, INTERACT-06, INTERACT-07, INTERACT-08, CONTENT-01, CONTENT-02, CONTENT-03, CONTENT-04
+**Success Criteria** (what must be TRUE):
+  1. 用户可以点击 Chat/Cowork/Code 标签切换模式，或使用 Ctrl+1/2/3 快捷键
+  2. 用户可以点击 New session 按钮创建新会话，或使用 Ctrl+N 快捷键
+  3. 用户可以点击 Search 按钮搜索会话标题和内容，或使用 Ctrl+F 快捷键
+  4. 用户可以点击 Customize 菜单访问主题切换、设置、关于
+  5. 用户可以使用前进后退按钮或 Alt+Left/Right 快捷键浏览会话历史
+  6. 用户可以在 Projects 列表中选择 "All" 或具体项目进行筛选
+  7. 用户可以在 Sessions 列表中看到按日期分组的会话（Today/Yesterday/Last 7 days）
+  8. 用户可以在增强输入框中看到附件按钮、Auto accept edits 开关、模型选择器、语音输入按钮
+**Plans**: TBD
+**UI hint**: yes
 
-**Dependencies:** 无
+### Phase 10: 视觉对齐与打磨
+**Goal**: 对齐官方视觉语言，完成空状态设计、细节动画、视觉一致性
+**Depends on**: Phase 9
+**Requirements**: VISUAL-01, VISUAL-02, VISUAL-03, VISUAL-04, VISUAL-05, VISUAL-06, TECH-05
+**Success Criteria** (what must be TRUE):
+  1. 用户看到浅色主题优化后的界面（接近白色背景，柔和分隔线）
+  2. 用户看到统一的线性图标（lucide-react，2px 描边，24x24 网格）
+  3. 用户看到圆角卡片（border-radius: 24px）应用到所有消息卡片
+  4. 用户在无会话时看到大熊猫吉祥物 + 欢迎文案的空状态设计
+  5. 用户在界面交互时看到流畅的动画过渡（200ms ease-out）
+**Plans**: TBD
+**UI hint**: yes
 
----
+## Progress
 
-### Phase 2: 中央工作区单流化 ✅
-**Duration:** 4-5 days  
-**Priority:** HIGH  
-**Status:** completed
-
-**Goal:** 单流式对话体验是对齐官方的关键，内联卡片 + 托盘双轨平滑过渡
-
-**Requirements:**
-- REQ-02: 中央工作区单流化
-- REQ-13: 内联卡片组件（approval/review/status）
-- REQ-14: 虚拟化消息列表（可选）
-
-**Plans:** 3 plans
-- [x] 02-01-PLAN.md — 内联卡片与底部托盘联动（approval/review/status 内联卡片 + 点击展开托盘）
-- [x] 02-02-PLAN.md — 简化 session header（移除元数据网格，状态芯片移至 header）
-- [x] 02-03-PLAN.md — 修复 E2E 测试（更新状态芯片定位器）
-
-**Success Criteria:**
-- 对话流占中央工作区 70%+ 视觉权重
-- approval/review 在对话流中显示为内联卡片
-- 点击内联卡片展开底部托盘详情
-- chooser 移至左侧栏
-- E2E 测试通过（approval-flow, review-flow）
-
-**Dependencies:** Phase 1（视觉 token、快捷键提示组件）
-
----
-
-### Phase 3: 左侧栏导航化与键盘交互 ✅
-**Duration:** 3-4 days  
-**Priority:** MEDIUM  
-**Status:** completed
-
-**Goal:** 左侧栏导航化简化信息架构，键盘交互系统提升效率
-
-**Requirements:**
-- REQ-03: 左侧栏导航化
-- REQ-08: 全局快捷键系统（ctrl+t/o/e）
-- REQ-10: 输入框历史导航（↑/↓）
-
-**Plans:** 4 plans
-- [x] 03-01-PLAN.md — 左侧栏导航化（移除品牌区、展开/折叠，项目选择器移至顶部）
-- [x] 03-02-PLAN.md — 全局快捷键系统（useGlobalKeybindings hook，ctrl+t/o/e，macOS Option 映射）
-- [x] 03-03-PLAN.md — 输入框历史导航（↑/↓，localStorage 持久化）
-- [x] 03-04-PLAN.md — 键盘导航 E2E 测试
-
-**Success Criteria:**
-- 左侧栏无品牌区和展开/折叠按钮
-- 项目选择器在左侧栏顶部
-- ctrl+t/o/e 快捷键工作
-- macOS Option 键映射工作
-- 输入历史导航（↑/↓）工作
-- 历史持久化到 localStorage
-- E2E 测试通过（keyboard-navigation）
-
-**Dependencies:** Phase 1（视觉 token、快捷键提示组件）
-
-**Success Criteria:**
-- 左侧栏仅包含项目列表 + 会话历史
-- ctrl+t 新建会话，ctrl+o 打开项目，ctrl+e 打开设置
-- 输入框 ↑/↓ 加载历史
-- macOS Option 键映射工作
-- E2E 测试通过
-
-**Dependencies:** Phase 1（快捷键提示组件）
-
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 7. 技术准备与基础组件 | 0/0 | Not started | - |
+| 8. 核心布局重构 | 0/0 | Not started | - |
+| 9. 增强交互功能 | 0/0 | Not started | - |
+| 10. 视觉对齐与打磨 | 0/0 | Not started | - |
 
 ---
-
-### Phase 4: 辅助面板抽屉化与组件样式对齐 ✅
-**Duration:** 3 days  
-**Priority:** LOW  
-**Status:** completed
-
-**Goal:** 辅助面板抽屉化释放中央工作区空间，组件样式对齐提升视觉一致性
-
-**Requirements:**
-- REQ-04: 右侧面板抽屉化（从固定宽度改为抽屉式，支持拖拽调整宽度，默认关闭）
-- REQ-12: 组件样式对齐（按钮、输入框、卡片、列表项等组件样式与官方一致）
-- REQ-14: 底部托盘细化（完善）
-- REQ-15: 设置面板组织（分组、搜索、快捷键提示）
-
-**Plans:** 5 plans
-- [x] 04-01-PLAN.md — 右侧面板抽屉化（默认关闭，拖拽调整宽度，Esc 关闭）
-- [x] 04-02-PLAN.md — 底部托盘细化（流畅动画，z-index 层级，视觉细节）
-- [x] 04-03-PLAN.md — 组件样式对齐（按钮、输入框、卡片、列表项）
-- [x] 04-04-PLAN.md — 设置面板组织（搜索、分组、快捷键提示）
-- [x] 04-05-PLAN.md — E2E 测试（抽屉行为、设置搜索、组件样式）
-
-**Success Criteria:**
-- 右侧面板默认关闭，支持拖拽调整宽度（300-600px）
-- 底部托盘展开/折叠流畅，z-index 层级正确
-- 所有组件样式对齐官方设计（按钮 36px 高度，输入框 36px 高度，卡片 14px 圆角）
-- 设置面板支持搜索过滤，分为 4 个组（Connection/Workspace/Keyboard/Capabilities）
-- 快捷键提示显示在设置面板中
-- E2E 测试通过（48/49，98% 通过率）
-
-**Dependencies:** Phase 1-3（视觉基础设施、布局结构）
-
----
-
-### Phase 5: 主题系统增强 ✅
-**Duration:** 2 days  
-**Priority:** LOW  
-**Status:** completed
-
-**Goal:** 多主题切换是增强功能，提升可访问性
-
-**Requirements:**
-- REQ-09: 主题系统增强（light/dark/auto 三种模式，系统主题跟随，主题切换动画）
-
-**Plans:** 5 plans
-- [x] 05-01-PLAN.md — 核心主题系统（状态管理、CSS 变量、系统检测）
-- [x] 05-02-PLAN.md — 主题选择器 UI（设置面板 Appearance 组）
-- [x] 05-03-PLAN.md — 主题切换 E2E 测试
-- [x] 05-04-PLAN.md — 修复剩余 E2E 测试失败
-- [x] 05-05-PLAN.md — 最终里程碑验证
-
-**Success Criteria:**
-- 支持 3 种主题切换（light/dark/auto）
-- 主题持久化工作（localStorage）
-- Auto 模式跟随系统主题（prefers-color-scheme）
-- 主题切换无闪烁（200ms 平滑过渡）
-- 主题选择器在设置面板 Appearance 组
-- E2E 测试通过（54 tests, 100% pass rate）
-- 所有 15 个 v2.2 需求完成验证
-
-**Dependencies:** 无（可随时实施）
-
----
-
-## Milestone Success Criteria
-
-里程碑完成标准：
-
-1. **UI 布局对齐 ✓**
-   - 顶栏 48px，3 个元素
-   - 中央工作区单流式对话，70%+ 视觉权重
-   - 左侧栏纯导航列表
-   - 右侧面板按需展开
-
-2. **视觉设计对齐 ✓**
-   - 新增 4 个官方颜色 token
-   - 统一 8px 间距基数
-   - 保留圆角/阴影/动画
-
-3. **交互模式对齐 ✓**
-   - 全局快捷键系统（ctrl+t/o/e）
-   - Focus ring 样式
-   - 输入框历史导航（↑/↓）
-
-4. **主题系统增强 ✓**
-   - 支持 dark/light/daltonized 主题切换
-
-5. **E2E 验证 ✓**
-   - 所有现有测试通过
-   - 新增布局/交互/主题测试通过
-
----
-
-## Progress Tracking
-
-**Overall Progress:** 5/5 phases (100%)
-
-| Phase | Status | Progress | Completed |
-|-------|--------|----------|-----------|
-| Phase 1: 顶栏简化与视觉基础 | completed | 2/2 | 2026-04-08 |
-| Phase 2: 中央工作区单流化 | completed | 3/3 | 2026-04-08 |
-| Phase 3: 左侧栏导航化与键盘交互 | completed | 4/4 | 2026-04-08 |
-| Phase 4: 辅助面板抽屉化与组件样式对齐 | completed | 5/5 | 2026-04-08 |
-| Phase 5: 主题系统增强 | completed | 5/5 | 2026-04-08 |
-
----
-
-## Risk Management
-
-| Risk | Impact | Probability | Mitigation | Status |
-|------|--------|-------------|------------|--------|
-| 功能入口丢失 | HIGH | MEDIUM | 所有功能保留，只调整位置 | 🟢 Mitigated |
-| 交互习惯突变 | MEDIUM | MEDIUM | 内联卡片 + 托盘双轨过渡 | 🟢 Mitigated |
-| 虚拟化列表性能 | MEDIUM | LOW | Phase 2 性能测试，必要时引入 | 🟡 Monitoring |
-| 快捷键冲突 | LOW | LOW | `e.preventDefault()` + 配置 | 🟢 Mitigated |
-| Focus trap 可访问性 | LOW | LOW | 遵循 ARIA 最佳实践 | 🟢 Mitigated |
-
----
-
-## Research References
-
-- `.planning/research/UI-PATTERNS.md` — 布局模式分析
-- `.planning/research/VISUAL-DESIGN.md` — 颜色/间距/字体系统
-- `.planning/research/INTERACTION-MODEL.md` — 交互模式对比
-- `.planning/research/ARCHITECTURE.md` — 架构对比
-- `.planning/research/SUMMARY.md` — 研究汇总和实施路线图
-
----
-
 *Last updated: 2026-04-08*

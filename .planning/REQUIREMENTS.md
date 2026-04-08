@@ -75,7 +75,40 @@
 
 ## Traceability
 
-需求到阶段的映射将在路线图创建后填充。
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| LAYOUT-01 | Phase 8 | Pending |
+| LAYOUT-02 | Phase 8 | Pending |
+| LAYOUT-03 | Phase 8 | Pending |
+| LAYOUT-04 | Phase 8 | Pending |
+| INTERACT-01 | Phase 9 | Pending |
+| INTERACT-02 | Phase 9 | Pending |
+| INTERACT-03 | Phase 9 | Pending |
+| INTERACT-04 | Phase 9 | Pending |
+| INTERACT-05 | Phase 9 | Pending |
+| INTERACT-06 | Phase 9 | Pending |
+| INTERACT-07 | Phase 9 | Pending |
+| INTERACT-08 | Phase 9 | Pending |
+| VISUAL-01 | Phase 10 | Pending |
+| VISUAL-02 | Phase 10 | Pending |
+| VISUAL-03 | Phase 10 | Pending |
+| VISUAL-04 | Phase 10 | Pending |
+| VISUAL-05 | Phase 10 | Pending |
+| VISUAL-06 | Phase 10 | Pending |
+| CONTENT-01 | Phase 9 | Pending |
+| CONTENT-02 | Phase 9 | Pending |
+| CONTENT-03 | Phase 9 | Pending |
+| CONTENT-04 | Phase 9 | Pending |
+| TECH-01 | Phase 7 | Pending |
+| TECH-02 | Phase 7 | Pending |
+| TECH-03 | Phase 7 | Pending |
+| TECH-04 | Phase 7 | Pending |
+| TECH-05 | Phase 10 | Pending |
+| REMOVE-01 | Phase 8 | Pending |
+| REMOVE-02 | Phase 8 | Pending |
+| REMOVE-03 | Phase 8 | Pending |
+| REMOVE-04 | Phase 8 | Pending |
+| REMOVE-05 | Phase 8 | Pending |
 
 ---
 *Last updated: 2026-04-08*
