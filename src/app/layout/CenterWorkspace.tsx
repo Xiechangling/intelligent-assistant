@@ -1,15 +1,11 @@
 import {
   AlertTriangle,
-  ArrowRight,
   ArrowUpRight,
-  ChevronDown,
   FileImage,
   FilePlus2,
-  FileText,
   FolderOpen,
   MessageSquare,
   SendHorizontal,
-  ShieldAlert,
   X,
 } from 'lucide-react'
 import { FormEvent, KeyboardEvent } from 'react'
@@ -463,169 +459,7 @@ function NoSessionsState({ onStartNew }: { onStartNew: () => Promise<void> }) {
   )
 }
 
-function InlineApprovalSummary({
-  onApprove,
-  onReject,
-}: {
-  onApprove: () => Promise<void>
-  onReject: () => Promise<void>
-}) {
-  const { pendingProposal, setBottomPanelExpanded } = useAppShellStore()
-
-  if (!pendingProposal) {
-    return null
-  }
-
-  const handleCardClick = () => {
-    setBottomPanelExpanded(true)
-  }
-
-  return (
-    <div className="workspace__inline-surface workspace__inline-surface--approval workspace__inline-surface--clickable" onClick={handleCardClick}>
-      <div className="workspace__inline-surface-header">
-        <div>
-          <span className="conversation-event__eyebrow workspace__inline-badge">
-            <ShieldAlert size={13} />
-            <span>Awaiting approval</span>
-          </span>
-          <h3>{pendingProposal.summary}</h3>
-        </div>
-        <StatusChip status="Awaiting approval" />
-      </div>
-      <p className="workspace__inline-copy">
-        Review the command details in the bottom panel, then approve or reject the command for this workspace.
-      </p>
-      <div className="workspace__inline-expand-hint">
-        <ChevronDown size={14} />
-        <span>Click to view full approval details in tray</span>
-      </div>
-      <div className="approval-card__actions" onClick={(e) => e.stopPropagation()}>
-        <button className="workspace__secondary-action" onClick={() => onReject().catch(() => undefined)}>
-          Reject command
-        </button>
-        <button className="workspace__primary-action" onClick={() => onApprove().catch(() => undefined)}>
-          Approve and run
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function InlineWorkflowStatusSummary() {
-  const { executionRecord, setBottomPanelExpanded, setBottomPanelTab } = useAppShellStore()
-
-  if (!executionRecord || executionRecord.status === 'awaiting-approval' || executionRecord.reviewState === 'ready') {
-    return null
-  }
-
-  const statusLabel =
-    executionRecord.status === 'running'
-      ? 'Working'
-      : executionRecord.status === 'rejected'
-        ? 'Attached'
-        : executionRecord.status === 'failed'
-          ? 'Failed'
-          : executionRecord.reviewState === 'unavailable'
-            ? 'Attached'
-            : executionRecord.status === 'completed'
-              ? 'Attached'
-              : 'Ready'
-
-  const helperCopy =
-    executionRecord.status === 'running'
-      ? 'Command execution is in progress. Follow detailed output in the bottom panel while the session stays attached.'
-      : executionRecord.status === 'rejected'
-        ? 'The command was rejected before execution. You can continue the session or send a revised instruction.'
-        : executionRecord.status === 'failed'
-          ? 'Execution stopped before completion. Review the bottom panel output, then continue from the same session.'
-          : executionRecord.reviewState === 'unavailable'
-            ? executionRecord.reviewUnavailableMessage ?? 'Execution completed, but review artifacts were unavailable for this workspace.'
-            : executionRecord.reviewState === 'empty'
-              ? 'Execution finished without changed files. You can continue the session or inspect the output for more detail.'
-              : 'Execution finished and the session is ready for the next step.'
-
-  const isClickable = executionRecord.status === 'running' || executionRecord.status === 'failed'
-
-  const handleCardClick = () => {
-    if (isClickable) {
-      setBottomPanelExpanded(true)
-      setBottomPanelTab('output')
-    }
-  }
-
-  return (
-    <div
-      className={`workspace__inline-surface workspace__inline-surface--status ${executionRecord.reviewState === 'unavailable' ? 'workspace__inline-surface--warning' : ''} ${isClickable ? 'workspace__inline-surface--clickable' : ''}`}
-      onClick={handleCardClick}
-    >
-      <div className="workspace__inline-surface-header">
-        <div>
-          <span className="conversation-event__eyebrow workspace__inline-badge">
-            <FileText size={13} />
-            <span>{executionRecord.reviewState === 'unavailable' ? 'Review unavailable' : statusLabel}</span>
-          </span>
-          <h3>{executionRecord.summary}</h3>
-        </div>
-        <StatusChip status={statusLabel as DesktopWorkflowStatus} />
-      </div>
-      <p className="workspace__inline-copy">{helperCopy}</p>
-      {isClickable && (
-        <div className="workspace__inline-expand-hint">
-          <ChevronDown size={14} />
-          <span>Click to view execution output in tray</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function InlineReviewSummary() {
-  const { executionRecord, selectReviewFile, setBottomPanelExpanded, setBottomPanelTab } = useAppShellStore()
-
-  if (!executionRecord || executionRecord.reviewState !== 'ready' || executionRecord.changedFiles.length === 0) {
-    return null
-  }
-
-  const handleFileClick = (fileId: string) => {
-    selectReviewFile(fileId)
-    setBottomPanelExpanded(true)
-    setBottomPanelTab('review')
-  }
-
-  return (
-    <div className="workspace__inline-surface workspace__inline-surface--review">
-      <div className="workspace__inline-surface-header">
-        <div>
-          <span className="conversation-event__eyebrow workspace__inline-badge">
-            <FileText size={13} />
-            <span>Review ready</span>
-          </span>
-          <h3>{executionRecord.changedFiles.length} changed files available</h3>
-        </div>
-        <StatusChip status="Review ready" />
-      </div>
-      <p className="workspace__inline-copy">Open review in the bottom panel to inspect changed files and continue the session.</p>
-      <div className="workspace__inline-expand-hint">
-        <ChevronDown size={14} />
-        <span>Click file to open review in tray</span>
-      </div>
-      <div className="review-summary-card__list review-summary-card__list--inline">
-        {executionRecord.changedFiles.map((file) => (
-          <button key={file.id} className="review-summary-card__file" onClick={() => handleFileClick(file.id)}>
-            <div>
-              <strong>{file.path}</strong>
-              <span>{file.summary}</span>
-            </div>
-            <span className="workspace__review-cta">
-              Open review
-              <ArrowRight size={14} />
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
+// Inline approval/review cards removed - Phase 8 simplification
 
 function CommandHint({ draftPrompt }: { draftPrompt: string }) {
   const firstLine = draftPrompt.trim().split(/\n/)[0] ?? ''
@@ -793,8 +627,6 @@ function SessionSurface({
   removePendingAttachment,
   submitPrompt,
   disabled,
-  approvePendingCommand,
-  rejectPendingCommand,
 }: {
   header: DesktopSessionHeader
   mode: 'project' | 'conversation'
@@ -809,16 +641,11 @@ function SessionSurface({
   removePendingAttachment: (attachmentId: string) => void
   submitPrompt: () => Promise<void>
   disabled: boolean
-  approvePendingCommand: () => Promise<void>
-  rejectPendingCommand: () => Promise<void>
 }) {
   return (
     <section className="workspace__session-surface">
       <SessionHeader header={header} mode={mode} />
       <div className="workspace__conversation-body">
-        {mode === 'project' ? <InlineApprovalSummary onApprove={approvePendingCommand} onReject={rejectPendingCommand} /> : null}
-        {mode === 'project' ? <InlineWorkflowStatusSummary /> : null}
-        {mode === 'project' ? <InlineReviewSummary /> : null}
         <Transcript
           events={transcript}
           mode={mode}
@@ -847,7 +674,6 @@ export function CenterWorkspace() {
     activeShellView,
     assistantError,
     assistantStatus,
-    approvePendingCommand,
     attemptRecovery,
     createConversationSession,
     createProjectSession,
@@ -857,7 +683,6 @@ export function CenterWorkspace() {
     loadSessionHistory,
     mode,
     pendingAttachments,
-    pendingProposal,
     projectWarning,
     recoveryMessage,
     removePendingAttachment,
@@ -870,7 +695,6 @@ export function CenterWorkspace() {
     sessionHistoryError,
     sessionHistoryStatus,
     submitPrompt,
-    rejectPendingCommand,
   } = useAppShellStore()
 
   const desktopWorkflow = getDesktopWorkflow()
@@ -994,9 +818,7 @@ export function CenterWorkspace() {
           addImageAttachments={addImageAttachments}
           removePendingAttachment={removePendingAttachment}
           submitPrompt={submitPrompt}
-          disabled={assistantStatus === 'streaming' || Boolean(pendingProposal)}
-          approvePendingCommand={approvePendingCommand}
-          rejectPendingCommand={rejectPendingCommand}
+          disabled={assistantStatus === 'streaming'}
         />
       ) : null}
 
@@ -1014,9 +836,7 @@ export function CenterWorkspace() {
           addImageAttachments={addImageAttachments}
           removePendingAttachment={removePendingAttachment}
           submitPrompt={submitPrompt}
-          disabled={assistantStatus === 'streaming' || Boolean(pendingProposal)}
-          approvePendingCommand={approvePendingCommand}
-          rejectPendingCommand={rejectPendingCommand}
+          disabled={assistantStatus === 'streaming'}
         />
       ) : null}
 
