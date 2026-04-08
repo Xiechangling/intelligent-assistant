@@ -7,7 +7,7 @@
 
 ## Phases
 
-- [ ] **Phase 7: 技术准备与基础组件** - 添加语音输入库，创建新 UI 组件基础设施
+- [x] **Phase 7: 技术准备与基础组件** - 添加语音输入库，创建新 UI 组件基础设施
 - [ ] **Phase 8: 核心布局重构** - 实现极简顶栏、左侧栏重构、中央区域纯净化
 - [ ] **Phase 9: 增强交互功能** - 实现三模式切换、导航、搜索、增强输入框
 - [ ] **Phase 10: 视觉对齐与打磨** - 对齐官方视觉语言、空状态设计、细节动画
@@ -27,11 +27,11 @@
 **Plans**: 5 plans in 2 waves
 
 Plans:
-- [ ] 07-01-PLAN.md — 安装 react-speech-recognition 依赖
-- [ ] 07-02-PLAN.md — 调整 appShellStore 状态结构
-- [ ] 07-03-PLAN.md — 创建 VoiceInput 组件
-- [ ] 07-04-PLAN.md — 创建 ModeTabs 组件
-- [ ] 07-05-PLAN.md — 创建 AttachmentList 组件和扩展 attachmentService
+- [x] 07-01-PLAN.md — 安装 react-speech-recognition 依赖
+- [x] 07-02-PLAN.md — 调整 appShellStore 状态结构
+- [x] 07-03-PLAN.md — 创建 VoiceInput 组件
+- [x] 07-04-PLAN.md — 创建 ModeTabs 组件
+- [x] 07-05-PLAN.md — 创建 AttachmentList 组件和扩展 attachmentService
 
 ### Phase 8: 核心布局重构
 **Goal**: 实现官方 UI 的核心布局结构，移除旧功能，建立新的信息架构
@@ -77,7 +77,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 7. 技术准备与基础组件 | 0/5 | Planning complete | - |
+| 7. 技术准备与基础组件 | 5/5 | Complete | 2026-04-08 |
 | 8. 核心布局重构 | 0/0 | Not started | - |
 | 9. 增强交互功能 | 0/0 | Not started | - |
 | 10. 视觉对齐与打磨 | 0/0 | Not started | - |

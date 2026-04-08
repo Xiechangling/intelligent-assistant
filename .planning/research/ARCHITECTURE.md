@@ -1,584 +1,891 @@
-# Architecture Patterns
+# Architecture Integration: 官方 UI 复刻与现有架构
 
-**Domain:** 官方 Claude Code Desktop 体验对齐
+**Project:** Intelligent Assistant v2.3
 **Researched:** 2026-04-08
+**Confidence:** HIGH
 
-## Recommended Architecture
+## Executive Summary
 
-官方 Claude Code Desktop 采用 **单一全局状态 + Context Provider + useSyncExternalStore** 的架构模式，与当前 Zustand 实现在理念上相似，但在具体实现细节上有差异。
+新 UI 完全复刻官方 Claude Code Desktop 体验，但保留现有 Tauri 2.0 + React 19 + Zustand 架构。核心策略：**重构 UI 层，保留服务层和状态管理模式**。
 
-### 核心架构对比
+现有架构已验证且稳定：
+- Zustand store (`appShellStore`) 管理全局状态
+- Tauri invoke 调用 Rust 后端服务
+- React 组件消费 store 状态并触发 actions
+- 服务层 (projectService, sessionService, assistantService) 封装 Tauri 调用
 
-| 层面 | 官方架构 | 当前架构 | 差异程度 |
-|------|---------|---------|---------|
-| 状态管理 | 自定义 Store + useSyncExternalStore | Zustand | 低 - 理念相同 |
-| 组件组织 | 扁平化 + Context 注入 | 扁平化 + 直接导入 | 低 |
-| 数据流 | 单向数据流 (setState → listeners) | 单向数据流 (set → subscribers) | 无 |
-| 路由模式 | 无路由 - 单页面条件渲染 | 无路由 - 单页面条件渲染 | 无 |
-| 服务层 | Tauri invoke + 全局状态 | Tauri invoke + Zustand | 低 |
+新 UI 集成方式：
+1. **保留 appShellStore** — 调整状态结构以匹配新 UI 需求
+2. **重写布局组件** — TopToolbar, LeftSidebar, CenterWorkspace 完全重构
+3. **移除组件** — RightPanel, BottomPanel 删除
+4. **保留服务层** — 所有 Tauri 服务调用不变
+5. **保留数据流** — UI → store actions → services → Tauri backend
 
-### Component Boundaries
+## Current Architecture (Preserved)
 
-官方架构的组件边界：
+### State Management: Zustand Store
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| `App.tsx` | 顶层 Provider 容器 (FpsMetrics, Stats, AppState) | AppStateProvider |
-| `AppStateProvider` | 全局状态注入 + 设置监听 | createStore, MailboxProvider, VoiceProvider |
-| `FullscreenLayout` | 布局容器 (scrollable + bottom + overlay + modal) | ScrollBox, Messages, PromptInput |
-| `Messages` | 消息列表渲染 | AppState (via useAppState) |
-| `PromptInput` | 用户输入 + 附件管理 | AppState (via useSetAppState) |
-| Native Services | Tauri 后端服务 (project/credential/session) | Frontend via invoke |
+**Location:** `src/app/state/appShellStore.ts`
 
-当前架构的组件边界：
-
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| `App.tsx` | Tauri 应用入口 | Sidebar, TopToolbar, Workspace, LifecycleTray |
-| `Sidebar` | 左侧导航 (项目/会话选择) | appShellStore (useAppShellStore) |
-| `TopToolbar` | 顶栏控制 (项目/模型/状态) | appShellStore (useAppShellStore) |
-| `Workspace` | 中央工作区 (对话/输出) | appShellStore (useAppShellStore) |
-| `LifecycleTray` | 底部托盘 (审批/输出/审查) | appShellStore (useAppShellStore) |
-| Native Services | Tauri 后端服务 | Frontend via invoke |
-
-### Data Flow
-
-**官方数据流：**
-
-```
-User Action → Component (useSetAppState)
-           ↓
-       setState(updater)
-           ↓
-    onChange callback (optional)
-           ↓
-    Notify all listeners
-           ↓
-Components re-render (useSyncExternalStore)
-```
-
-**当前数据流：**
-
-```
-User Action → Component (useAppShellStore)
-           ↓
-       set(updater) / direct methods
-           ↓
-    Zustand internal notify
-           ↓
-Components re-render (Zustand subscription)
-```
-
-**关键差异：** 官方使用 `useSyncExternalStore` (React 18 标准 API)，当前使用 Zustand 内置订阅机制。两者在功能上等价，但官方更接近 React 原生模式。
-
-## 状态管理对比分析
-
-### 官方状态管理 (AppState + createStore)
-
-**核心实现：**
-
+**Core Pattern:**
 ```typescript
-// src/state/store.ts
-export function createStore<T>(
-  initialState: T,
-  onChange?: OnChange<T>,
-): Store<T> {
-  let state = initialState
-  const listeners = new Set<Listener>()
-
-  return {
-    getState: () => state,
-    setState: (updater: (prev: T) => T) => {
-      const prev = state
-      const next = updater(prev)
-      if (Object.is(next, prev)) return
-      state = next
-      onChange?.({ newState: next, oldState: prev })
-      for (const listener of listeners) listener()
-    },
-    subscribe: (listener: Listener) => {
-      listeners.add(listener)
-      return () => listeners.delete(listener)
-    },
-  }
-}
-```
-
-**使用模式：**
-
-```typescript
-// 组件中使用
-const verbose = useAppState(s => s.verbose)
-const model = useAppState(s => s.mainLoopModel)
-const setAppState = useSetAppState()
-
-// 更新状态
-setAppState(prev => ({ ...prev, verbose: true }))
-```
-
-**特点：**
-- 轻量级自定义实现 (~35 行代码)
-- 使用 `useSyncExternalStore` 订阅
-- 支持 `onChange` 回调用于副作用
-- 严格的 selector 模式 (必须返回子属性，不能返回整个 state)
-- Context Provider 注入，避免全局单例
-
-### 当前状态管理 (Zustand)
-
-**核心实现：**
-
-```typescript
-// src/app/state/appShellStore.ts
-export const useAppShellStore = create<AppShellState>((set, get) => ({
-  mode: 'conversation',
-  activeProjectPath: null,
-  // ... 50+ 个状态字段
-  
-  setMode: (mode) => set({ mode }),
-  setActiveProject: (project) => set((state) => ({
-    activeProjectPath: project?.path,
-    // ... 复杂的派生逻辑
-  })),
-  submitPrompt: async () => {
-    const state = get()
-    // ... 复杂的异步逻辑
-  },
-  // ... 30+ 个方法
-}))
-```
-
-**使用模式：**
-
-```typescript
-// 组件中使用
-const { mode, activeProjectPath, setMode } = useAppShellStore()
-
-// 或选择性订阅
-const mode = useAppShellStore(state => state.mode)
-```
-
-**特点：**
-- 成熟的第三方库 (Zustand)
-- 内置订阅机制
-- 支持方法和状态混合定义
-- 全局单例模式
-- 更灵活的 API (可以直接解构)
-
-### 架构差异总结
-
-| 维度 | 官方 | 当前 | 影响 |
-|------|------|------|------|
-| **实现方式** | 自定义 Store | Zustand | 低 - 功能等价 |
-| **订阅机制** | useSyncExternalStore | Zustand 内置 | 低 - 都是 React 18+ 兼容 |
-| **状态结构** | 扁平化大对象 (~100+ 字段) | 扁平化大对象 (~50+ 字段) | 无 |
-| **方法定义** | 外部定义 (services) | 内联定义 (store 内) | 中 - 组织方式不同 |
-| **Context 注入** | 是 (AppStateProvider) | 否 (全局单例) | 低 - 单用户场景无影响 |
-| **onChange 钩子** | 内置支持 | 需要 middleware | 低 - 当前未使用 |
-
-## 是否需要架构层面的重构？
-
-### 结论：**不需要大规模重构**
-
-**理由：**
-
-1. **状态管理理念一致**
-   - 官方和当前都采用单一全局状态 + 订阅模式
-   - Zustand 本质上是 `createStore` 的增强版，核心机制相同
-   - 两者都支持 selector 优化和细粒度订阅
-
-2. **组件组织模式相似**
-   - 都是扁平化组件结构，无深层嵌套
-   - 都通过状态管理库连接组件，而非 props drilling
-   - 都采用单页面条件渲染，无路由层
-
-3. **数据流模式相同**
-   - 单向数据流：Action → State Update → Re-render
-   - 异步操作都在 action 层处理
-   - 都支持派生状态和计算属性
-
-4. **Zustand 的优势**
-   - 更成熟的生态和社区支持
-   - 内置 devtools、persist、immer 等 middleware
-   - 更好的 TypeScript 支持
-   - 更灵活的 API (支持直接解构)
-
-### 需要调整的细节
-
-虽然不需要重构状态管理，但以下细节需要调整以对齐官方体验：
-
-#### 1. 组件层级调整
-
-**官方模式：**
-```
-App (Providers)
-└── FullscreenLayout
-    ├── ScrollBox (scrollable: Messages)
-    ├── PromptInput (bottom)
-    ├── PermissionRequest (overlay)
-    └── Modal (slash commands)
-```
-
-**当前模式：**
-```
-App
-├── Sidebar (左侧)
-├── TopToolbar (顶部)
-├── Workspace (中央)
-└── LifecycleTray (底部)
-```
-
-**调整方向：** 将当前的四分区布局改为官方的 `FullscreenLayout` 单流式布局。
-
-#### 2. 状态字段对齐
-
-官方 AppState 的关键字段：
-
-```typescript
-type AppState = {
-  // 核心状态
-  mainLoopModel: ModelSetting
-  verbose: boolean
-  statusLineText: string | undefined
-  
-  // 视图状态
-  expandedView: 'none' | 'tasks' | 'teammates'
-  viewSelectionMode: 'none' | 'selecting-agent' | 'viewing-agent'
-  footerSelection: FooterItem | null
-  
-  // 权限上下文
-  toolPermissionContext: ToolPermissionContext
-  
-  // 任务和团队
-  tasks: { [taskId: string]: TaskState }
-  foregroundedTaskId?: string
-  viewingAgentTaskId?: string
-  
-  // 插件和 MCP
-  mcp: { clients, tools, commands, resources }
-  plugins: { enabled, disabled, commands, errors }
-  
-  // 提示建议
-  promptSuggestion: { text, promptId, shownAt, acceptedAt }
-  speculation: SpeculationState
-}
-```
-
-当前 appShellStore 的关键字段：
-
-```typescript
-type AppShellState = {
-  // 模式和项目
+// Store structure
+interface AppShellState {
+  // State
   mode: AppMode
-  activeProjectPath: string | null
   activeSession: SessionDetail | null
+  sessionHistory: SessionRecord[]
+  // ... more state
   
-  // 模型和会话
-  globalDefaultModel: ModelId
-  activeSessionModelOverride: ModelId | null
+  // Actions
+  setMode: (mode: AppMode) => void
+  createProjectSession: () => Promise<void>
+  submitPrompt: () => Promise<void>
+  // ... more actions
+}
+
+// Usage in components
+const { activeSession, submitPrompt } = useAppShellStore()
+```
+
+**Key State Categories:**
+1. **Mode & Navigation:** `mode`, `activeShellView`, `theme`
+2. **Project Context:** `activeProjectPath`, `recentProjects`
+3. **Session State:** `activeSession`, `sessionHistory`, `sessionHistoryStatus`
+4. **Workflow State:** `pendingProposal`, `executionRecord`, `assistantStatus`
+5. **UI State:** `rightPanelOpen`, `bottomPanelExpanded`, `draftPrompt`
+6. **Derived ViewModels:** `getDesktopWorkflow()`, `getChooserView()`, `getActiveSessionHeader()`
+
+### Service Layer (Unchanged)
+
+**Pattern:** All services wrap Tauri `invoke()` calls with TypeScript types.
+
+**Services:**
+- `projectService.ts` — `pickProjectDirectory()`, `getRecentProjects()`
+- `sessionService.ts` — `createSession()`, `loadSession()`, `listSessions()`, `updateSessionActivity()`
+- `assistantService.ts` — `streamAssistantResponse()`, `runApprovedCommand()`
+- `attachmentService.ts` — `openFileAttachments()`, `openImageAttachments()`
+- `credentialService.ts` — Credential management
+
+**Example:**
+```typescript
+// Service wraps Tauri invoke
+export async function createSession(input: CreateSessionInput) {
+  return invoke<SessionDetail>('create_session', { input })
+}
+
+// Store action calls service
+createProjectSession: async () => {
+  const session = await createSession({ /* ... */ })
+  set({ activeSession: session })
+}
+
+// Component calls store action
+const { createProjectSession } = useAppShellStore()
+await createProjectSession()
+```
+
+### Component Hierarchy (Current)
+
+```
+AppShell (layout container)
+├── TopToolbar (model selector + settings)
+├── LeftSidebar (projects + sessions)
+├── CenterWorkspace (main content)
+├── RightPanel (settings/context drawer)
+└── BottomPanel (approval/output/review)
+```
+
+## New UI Architecture (v2.3)
+
+### Component Hierarchy (Target)
+
+```
+AppShell (layout container)
+├── TopToolbar (极简：窗口控制 + 导航 + 三模式标签)
+├── LeftSidebar (New/Search/Customize + Projects/Sessions)
+└── CenterWorkspace (单一对话流 + 增强输入框)
+```
+
+### Component Mapping: Rewrite vs Refactor
+
+| Current Component | Action | New Component | Rationale |
+|-------------------|--------|---------------|-----------|
+| `AppShell.tsx` | **Refactor** | `AppShell.tsx` | Remove RightPanel/BottomPanel, simplify layout |
+| `TopToolbar.tsx` | **Rewrite** | `TopToolbar.tsx` | 极简顶栏：窗口控制 + 前进后退 + Chat/Cowork/Code 标签 |
+| `LeftSidebar.tsx` | **Rewrite** | `LeftSidebar.tsx` | 新结构：顶部操作 + Projects/Sessions 列表 |
+| `CenterWorkspace.tsx` | **Refactor** | `CenterWorkspace.tsx` | 移除内联审批/审查卡片，纯净对话流 + 增强输入框 |
+| `RightPanel.tsx` | **Delete** | — | 功能集成到 LeftSidebar Customize |
+| `BottomPanel.tsx` | **Delete** | — | 审批流移除，审查面板移除 |
+
+### State Management Changes
+
+**appShellStore.ts 调整：**
+
+#### Remove (不再需要的状态)
+```typescript
+// UI state for removed panels
+rightPanelView: RightPanelView
+rightPanelOpen: boolean
+rightPanelWidth: number
+bottomPanelExpanded: boolean
+bottomPanelTab: BottomPanelTab
+
+// Approval workflow state (审批流移除)
+pendingProposal: CommandProposal | null
+executionRecord: ExecutionRecord | null
+selectedExecutionId: string | null
+selectedReviewFileId: string | null
+
+// Review presets (审查面板移除)
+presets: ReviewPreset[]
+activePresetId: string | null
+```
+
+#### Keep (保留的核心状态)
+```typescript
+// Mode & navigation
+mode: AppMode  // 'conversation' | 'project'
+theme: ThemeMode
+activeShellView: ShellView
+
+// Project & session
+activeProjectPath: string | null
+recentProjects: ProjectRecord[]
+activeSession: SessionDetail | null
+sessionHistory: SessionRecord[]
+
+// Assistant interaction
+draftPrompt: string
+pendingAttachments: SessionAttachment[]
+assistantStatus: AssistantStatus
+assistantError: string | null
+currentStageLabel: string | null
+
+// Credentials
+credentialStatus: CredentialStatusSummary
+```
+
+#### Add (新增状态)
+```typescript
+// Navigation history (前进后退)
+navigationHistory: string[]
+navigationIndex: number
+
+// Sidebar state
+sidebarCollapsed: boolean
+searchQuery: string
+searchResults: SessionRecord[]
+
+// Three-mode tabs (Chat/Cowork/Code)
+// Note: 可以复用现有 mode，或新增独立字段
+activeMode: 'chat' | 'cowork' | 'code'
+```
+
+### Data Flow (Unchanged Pattern)
+
+```
+User Interaction
+    ↓
+Component Event Handler
+    ↓
+Store Action (useAppShellStore)
+    ↓
+Service Layer (projectService, sessionService, etc.)
+    ↓
+Tauri invoke() → Rust Backend
+    ↓
+Response → Service → Store State Update
+    ↓
+Component Re-render (Zustand subscription)
+```
+
+**Example: Creating a Session**
+
+```typescript
+// 1. User clicks "New session" in LeftSidebar
+<button onClick={() => createProjectSession()}>New session</button>
+
+// 2. Store action
+createProjectSession: async () => {
+  const { activeProjectPath, globalDefaultModel, recentProjects } = get()
   
-  // UI 状态
-  rightPanelOpen: boolean
-  bottomPanelExpanded: boolean
+  // 3. Call service
+  const session = await createSession({
+    projectPath: activeProjectPath,
+    projectName: deriveProjectName(activeProjectPath, recentProjects),
+    effectiveModelId: globalDefaultModel,
+    title: `Session for ${projectName}`,
+  })
   
-  // 工作流状态
-  pendingProposal: CommandProposal | null
-  executionRecord: ExecutionRecord | null
+  // 4. Update state
+  set({
+    activeSession: session,
+    activeShellView: 'project-sessions',
+  })
   
-  // 方法 (30+ 个)
-  setMode, setActiveProject, submitPrompt, ...
+  // 5. Reload history
+  await get().loadSessionHistory()
+}
+
+// 6. Component re-renders with new activeSession
+```
+
+## Integration Points
+
+### 1. TopToolbar Integration
+
+**Current:** Model selector + Settings button → opens RightPanel
+
+**New:** 窗口控制 + 前进后退 + Chat/Cowork/Code 标签
+
+**State Integration:**
+```typescript
+// Keep
+const { theme, setTheme } = useAppShellStore()
+
+// Add
+const { 
+  activeMode, 
+  setActiveMode, 
+  navigationHistory, 
+  navigationIndex,
+  goBack, 
+  goForward 
+} = useAppShellStore()
+
+// Remove
+// setRightPanelView, setRightPanelOpen (no longer needed)
+```
+
+**Tauri Integration:**
+```typescript
+// Window controls (new)
+import { getCurrentWindow } from '@tauri-apps/api/window'
+
+const appWindow = getCurrentWindow()
+await appWindow.minimize()
+await appWindow.toggleMaximize()
+await appWindow.close()
+```
+
+**New Actions to Add:**
+```typescript
+// In appShellStore
+goBack: () => {
+  const { navigationHistory, navigationIndex } = get()
+  if (navigationIndex > 0) {
+    const newIndex = navigationIndex - 1
+    const targetView = navigationHistory[newIndex]
+    set({ navigationIndex: newIndex, activeShellView: targetView })
+  }
+},
+
+goForward: () => {
+  const { navigationHistory, navigationIndex } = get()
+  if (navigationIndex < navigationHistory.length - 1) {
+    const newIndex = navigationIndex + 1
+    const targetView = navigationHistory[newIndex]
+    set({ navigationIndex: newIndex, activeShellView: targetView })
+  }
+},
+
+pushNavigation: (view: ShellView) => {
+  const { navigationHistory, navigationIndex } = get()
+  const newHistory = navigationHistory.slice(0, navigationIndex + 1)
+  newHistory.push(view)
+  set({ 
+    navigationHistory: newHistory, 
+    navigationIndex: newHistory.length - 1,
+    activeShellView: view
+  })
 }
 ```
 
-**差异：**
-- 官方更关注 **任务/团队/插件** 的状态管理
-- 当前更关注 **会话/执行/审查** 的工作流状态
-- 官方将方法定义在外部 services，当前内联在 store
+### 2. LeftSidebar Integration
 
-**调整方向：** 保持当前字段结构，但调整 UI 层的渲染逻辑以匹配官方体验。
+**Current:** Projects + Sessions 列表
 
-#### 3. 布局组件重构
+**New:** 顶部操作 (New/Search/Customize) + Projects/Sessions 列表
 
-**需要新增的组件：**
-
-| 组件 | 职责 | 参考官方 |
-|------|------|---------|
-| `FullscreenLayout` | 单流式布局容器 | `src/components/FullscreenLayout.tsx` |
-| `ScrollBox` | 虚拟滚动容器 | `src/ink/components/ScrollBox.tsx` |
-| `VirtualMessageList` | 消息虚拟化渲染 | `src/components/VirtualMessageList.tsx` |
-| `PromptInputFooter` | 底部输入区 (pills + suggestions) | `src/components/PromptInput/PromptInputFooter.tsx` |
-
-**需要调整的组件：**
-
-| 当前组件 | 调整方向 |
-|---------|---------|
-| `Sidebar` | 改为轻量级会话选择器 (Cmd+K 弹窗) |
-| `TopToolbar` | 简化为内容中心的轻量 chrome |
-| `Workspace` | 改为单流式消息列表 + 输入框 |
-| `LifecycleTray` | 收敛为底部 pills (approval/review) |
-
-## 迁移路径建议
-
-### Phase 1: 保持 Zustand，调整组件结构
-
-**目标：** 在不改变状态管理的前提下，重构 UI 层以匹配官方布局。
-
-**步骤：**
-1. 创建 `FullscreenLayout` 组件，接收 `scrollable` 和 `bottom` props
-2. 将 `Workspace` 改为消息列表 + ScrollBox
-3. 将 `LifecycleTray` 改为 `PromptInputFooter` (pills 模式)
-4. 将 `Sidebar` 改为 Cmd+K 触发的会话选择器
-5. 简化 `TopToolbar` 为轻量 chrome
-
-**优势：**
-- 风险低，状态管理不变
-- 可以逐步迁移，不影响现有功能
-- 保留 Zustand 的 devtools 和 middleware
-
-### Phase 2: (可选) 迁移到自定义 Store
-
-**目标：** 完全对齐官方架构，使用 `createStore` + `useSyncExternalStore`。
-
-**步骤：**
-1. 实现 `createStore` (参考官方 `src/state/store.ts`)
-2. 创建 `AppStateProvider` 包装器
-3. 将 `useAppShellStore` 改为 `useAppState` + `useSetAppState`
-4. 迁移状态字段和方法
-
-**优势：**
-- 完全对齐官方架构
-- 减少依赖 (移除 Zustand)
-- 更接近 React 原生模式
-
-**劣势：**
-- 迁移成本高
-- 失去 Zustand 的 devtools 和 middleware
-- 需要重新实现持久化等功能
-
-### 推荐方案：**Phase 1 Only**
-
-**理由：**
-1. **Zustand 和官方 Store 在功能上等价**，迁移收益低
-2. **UI 层调整是体验对齐的关键**，状态管理不是瓶颈
-3. **保持 Zustand 可以利用其生态**，降低维护成本
-4. **单用户场景下 Context 注入无实际优势**
-
-## Patterns to Follow
-
-### Pattern 1: Selector-Based Subscription
-
-**What:** 使用 selector 函数订阅状态切片，避免不必要的重渲染。
-
-**When:** 组件只需要部分状态时。
-
-**Example (官方模式):**
+**State Integration:**
 ```typescript
-// 只订阅 verbose 字段
-const verbose = useAppState(s => s.verbose)
+// Keep
+const {
+  activeProjectPath,
+  recentProjects,
+  sessionHistory,
+  activeSession,
+  resumeSession,
+  setActiveProject,
+} = useAppShellStore()
 
-// 订阅多个独立字段
-const verbose = useAppState(s => s.verbose)
-const model = useAppState(s => s.mainLoopModel)
+// Add
+const {
+  sidebarCollapsed,
+  setSidebarCollapsed,
+  searchQuery,
+  setSearchQuery,
+  searchResults,
+  openCustomizeMenu,
+} = useAppShellStore()
+
+// Remove
+// No changes to service calls
 ```
 
-**Example (当前模式 - 保持):**
+**Service Integration:**
 ```typescript
-// Zustand 支持相同模式
-const verbose = useAppShellStore(s => s.verbose)
-const model = useAppShellStore(s => s.globalDefaultModel)
-```
+// Project picker (unchanged)
+import { pickProjectDirectory } from '../services/projectService'
 
-### Pattern 2: Stable Setter Reference
-
-**What:** 使用稳定的 setter 引用，避免 useEffect 依赖变化。
-
-**When:** 组件只需要更新状态，不需要读取状态时。
-
-**Example (官方模式):**
-```typescript
-const setAppState = useSetAppState() // 稳定引用
-
-useEffect(() => {
-  setAppState(prev => ({ ...prev, verbose: true }))
-}, [setAppState]) // 依赖永远不变
-```
-
-**Example (当前模式 - 保持):**
-```typescript
-const setMode = useAppShellStore(s => s.setMode) // 稳定引用
-
-useEffect(() => {
-  setMode('project')
-}, [setMode]) // 依赖永远不变
-```
-
-### Pattern 3: Derived State in Selectors
-
-**What:** 在 selector 中计算派生状态，而非存储在 state 中。
-
-**When:** 状态可以从其他字段计算得出时。
-
-**Example (官方模式):**
-```typescript
-// 官方在 store 外定义 getter 函数
-function getDesktopWorkflow(state: AppState): DesktopWorkflowViewModel {
-  return {
-    startupState: deriveStartupState(state),
-    desktopStatus: deriveDesktopStatus(state),
-    trayMode: deriveTrayMode(state),
+const handleProjectPick = async () => {
+  const project = await pickProjectDirectory()
+  if (project) {
+    setActiveProject(project)
   }
 }
 
-// 组件中使用
-const workflow = useAppState(getDesktopWorkflow)
+// Session resume (unchanged)
+const handleSessionResume = async (sessionId: string) => {
+  await resumeSession(sessionId)
+}
 ```
 
-**Example (当前模式 - 保持):**
+**New: Customize Menu**
+- Theme toggle (集成现有 `theme` state)
+- Keybindings toggle (集成现有 `keybindingsEnabled` state)
+- Model selector (移动自 TopToolbar)
+
+**New Actions to Add:**
 ```typescript
-// 当前在 store 内定义 getter 方法
-export const useAppShellStore = create<AppShellState>((set, get) => ({
-  // ... state fields
+// In appShellStore
+setSearchQuery: (query: string) => {
+  set({ searchQuery: query })
+  // Trigger search
+  const { sessionHistory } = get()
+  const results = sessionHistory.filter(session => 
+    session.title.toLowerCase().includes(query.toLowerCase()) ||
+    session.projectName.toLowerCase().includes(query.toLowerCase())
+  )
+  set({ searchResults: results })
+},
+
+setSidebarCollapsed: (collapsed: boolean) => {
+  set({ sidebarCollapsed: collapsed })
+  // Persist to localStorage
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('sidebarCollapsed', String(collapsed))
+  }
+}
+```
+
+### 3. CenterWorkspace Integration
+
+**Current:** 对话流 + 内联审批卡片 + 内联审查卡片 + 输入框
+
+**New:** 纯净对话流 + 增强输入框 (附件/Auto accept/模型/语音)
+
+**State Integration:**
+```typescript
+// Keep (core conversation state)
+const {
+  activeSession,
+  assistantStatus,
+  currentStageLabel,
+  draftPrompt,
+  pendingAttachments,
+  setDraftPrompt,
+  addFileAttachments,
+  addImageAttachments,
+  removePendingAttachment,
+  submitPrompt,
+} = useAppShellStore()
+
+// Add (enhanced composer)
+const {
+  autoAcceptEnabled,
+  setAutoAcceptEnabled,
+  voiceInputActive,
+  startVoiceInput,
+  stopVoiceInput,
+} = useAppShellStore()
+
+// Remove (approval/review workflow)
+// pendingProposal, executionRecord, approvePendingCommand, rejectPendingCommand
+// InlineApprovalSummary, InlineWorkflowStatusSummary, InlineReviewSummary
+```
+
+**Component Changes:**
+```typescript
+// Remove these components
+- InlineApprovalSummary
+- InlineWorkflowStatusSummary
+- InlineReviewSummary
+
+// Keep these components
+- Transcript (对话流)
+- Composer (输入框)
+- SessionHeader (会话头部)
+
+// Enhance Composer
++ Auto accept toggle
++ Model selector (per-session override)
++ Voice input button
+```
+
+**Service Integration (Unchanged):**
+```typescript
+// Prompt submission
+import { streamAssistantResponse } from '../services/assistantService'
+
+submitPrompt: async () => {
+  const state = get()
+  await streamAssistantResponse(
+    { 
+      mode: state.mode, 
+      prompt: state.draftPrompt, 
+      modelId: state.activeSession?.effectiveModelId,
+      projectPath: state.activeProjectPath,
+      attachments: state.pendingAttachments,
+    },
+    {
+      onStage: async (stageLabel, body) => { 
+        // Update transcript with stage event
+        const session = get().activeSession
+        if (!session) return
+        
+        const transcript = [
+          ...session.transcript,
+          createEvent({ kind: 'stage-status', body, stageLabel })
+        ]
+        set({ 
+          activeSession: { ...session, transcript },
+          currentStageLabel: stageLabel
+        })
+      },
+      onAssistantChunk: async (chunk) => { 
+        // Append to last assistant message
+        const session = get().activeSession
+        if (!session) return
+        
+        const transcript = session.transcript.map((event, idx) => {
+          if (idx === session.transcript.length - 1 && event.kind === 'assistant-message') {
+            return { ...event, body: event.body + chunk }
+          }
+          return event
+        })
+        set({ activeSession: { ...session, transcript } })
+      },
+      onComplete: async () => { 
+        // Finalize session
+        const session = get().activeSession
+        if (!session) return
+        
+        await persistSession(session)
+        set({ 
+          assistantStatus: 'idle',
+          currentStageLabel: null
+        })
+      },
+    }
+  )
+}
+```
+
+**New Actions for Enhanced Composer:**
+```typescript
+// In appShellStore
+autoAcceptEnabled: false,
+voiceInputActive: false,
+
+setAutoAcceptEnabled: (enabled: boolean) => {
+  set({ autoAcceptEnabled: enabled })
+  // Persist to localStorage
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('autoAcceptEnabled', String(enabled))
+  }
+},
+
+startVoiceInput: async () => {
+  set({ voiceInputActive: true })
+  // TODO: Integrate with Web Speech API or Tauri voice plugin
+},
+
+stopVoiceInput: () => {
+  set({ voiceInputActive: false })
+}
+```
+
+### 4. Empty State Integration
+
+**Current:** 大段文字 + 多个操作按钮
+
+**New:** 大熊猫吉祥物 + 简洁提示
+
+**State Integration:**
+```typescript
+// Detect empty state
+const { activeSession, sessionHistory } = useAppShellStore()
+const isEmpty = !activeSession && sessionHistory.length === 0
+
+// Render
+{isEmpty && (
+  <div className="empty-state">
+    <img src="/panda-mascot.svg" alt="Claude mascot" />
+    <h2>Start a conversation</h2>
+    <p>Send a message to begin</p>
+  </div>
+)}
+```
+
+**No new state needed** — empty state is derived from existing `activeSession` and `sessionHistory`.
+
+## Build Order (Recommended)
+
+### Phase 1: State Preparation (1-2 days)
+1. **Audit appShellStore** — 标记要移除的状态
+2. **Add new state** — `navigationHistory`, `sidebarCollapsed`, `searchQuery`, `autoAcceptEnabled`, `voiceInputActive`
+3. **Add new actions** — `goBack`, `goForward`, `pushNavigation`, `setSearchQuery`, `setSidebarCollapsed`, `setAutoAcceptEnabled`, `startVoiceInput`, `stopVoiceInput`
+4. **Remove approval/review state** — Comment out (不删除) `pendingProposal`, `executionRecord`, presets 相关代码
+5. **Update derived ViewModels** — `getDesktopWorkflow()` 不再返回 tray/approval 数据
+
+### Phase 2: Layout Refactor (1 day)
+1. **AppShell.tsx** — 移除 RightPanel/BottomPanel 引用，简化布局
+2. **Rename/Archive components** — 将 `RightPanel.tsx`, `BottomPanel.tsx` 移动到 `_archived/` 文件夹
+3. **Update CSS** — 移除 `.app-shell__drawer`, `.app-shell__bottom` 样式
+
+### Phase 3: TopToolbar Rewrite (2-3 days)
+1. **Window controls** — 集成 Tauri window API (minimize, maximize, close)
+2. **Navigation buttons** — 前进后退逻辑 (goBack, goForward)
+3. **Three-mode tabs** — Chat/Cowork/Code 切换 UI
+4. **Remove model selector** — 移动到 LeftSidebar Customize
+5. **Visual polish** — 对齐官方设计 (间距、字体、颜色)
+
+### Phase 4: LeftSidebar Rewrite (3-4 days)
+1. **Top actions** — New session, Search, Customize 按钮
+2. **Search functionality** — 实现搜索逻辑和 UI
+3. **Customize menu** — 集成 theme, keybindings, model selector
+4. **Projects list** — 保留现有逻辑，调整样式
+5. **Sessions list** — 保留现有逻辑，调整样式
+6. **Visual polish** — 对齐官方设计
+
+### Phase 5: CenterWorkspace Refactor (2-3 days)
+1. **Remove inline cards** — 删除 InlineApprovalSummary, InlineWorkflowStatusSummary, InlineReviewSummary
+2. **Simplify Transcript** — 纯净对话流，移除审批/审查事件渲染
+3. **Enhance Composer** — 添加 Auto accept toggle, Model selector, Voice input button
+4. **Empty state** — 添加大熊猫吉祥物 SVG 和简洁文案
+5. **Visual polish** — 对齐官方设计
+
+### Phase 6: Visual Polish (2-3 days)
+1. **Theme alignment** — 浅色主题优先，线性图标，圆角卡片
+2. **Typography** — 字体大小、行高、间距对齐官方
+3. **Colors** — 柔和分隔线，accent colors
+4. **Animations** — 平滑过渡，微交互
+5. **Responsive** — 确保不同窗口尺寸下的表现
+
+**Total Estimated Time: 11-16 days**
+
+## Tauri Backend (No Changes Required)
+
+**Rust commands remain unchanged:**
+- `select_project_directory`
+- `list_recent_projects`
+- `create_session`
+- `load_session`
+- `list_sessions`
+- `update_session_activity`
+- `save_recovery_snapshot`
+- `load_recovery_snapshot`
+
+**Why no backend changes:**
+- UI 重构不改变数据模型
+- 服务层 API 保持稳定
+- Tauri invoke 调用签名不变
+- 审批流移除是 UI 层决策，后端仍支持命令执行
+
+## Testing Strategy
+
+### Unit Tests (Component Level)
+```typescript
+// Test store actions
+describe('appShellStore', () => {
+  it('should create project session', async () => {
+    const { createProjectSession, activeSession } = useAppShellStore.getState()
+    await createProjectSession()
+    expect(activeSession).toBeDefined()
+  })
   
-  getDesktopWorkflow: () => buildDesktopWorkflow(get()),
-  getDesktopStatus: () => deriveDesktopStatus(get()),
-}))
-
-// 组件中使用
-const workflow = useAppShellStore(s => s.getDesktopWorkflow())
-```
-
-**差异：** 官方将 getter 定义在外部，当前定义在 store 内。两者功能相同，当前模式更紧凑。
-
-### Pattern 4: Single-Flow Layout
-
-**What:** 使用单流式布局，消息和输入在同一垂直流中。
-
-**When:** 构建对话式 UI 时。
-
-**Example (官方模式):**
-```typescript
-<FullscreenLayout
-  scrollable={<Messages />}
-  bottom={<PromptInput />}
-  overlay={<PermissionRequest />}
-  modal={<SlashCommandDialog />}
-/>
-```
-
-**当前需要调整：** 将四分区布局改为单流式。
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Props Drilling
-
-**What:** 通过多层组件传递 props。
-
-**Why bad:** 增加组件耦合，难以维护。
-
-**Instead:** 使用状态管理库直接订阅。
-
-```typescript
-// ❌ Bad
-<Parent data={data}>
-  <Child data={data}>
-    <GrandChild data={data} />
-  </Child>
-</Parent>
-
-// ✅ Good
-<Parent>
-  <Child>
-    <GrandChild /> {/* 内部使用 useAppShellStore */}
-  </Child>
-</Parent>
-```
-
-### Anti-Pattern 2: 在 Selector 中返回新对象
-
-**What:** 每次渲染都创建新对象。
-
-**Why bad:** 导致不必要的重渲染 (Object.is 总是返回 false)。
-
-**Instead:** 返回已存在的对象引用。
-
-```typescript
-// ❌ Bad
-const data = useAppState(s => ({ 
-  mode: s.mode, 
-  path: s.activeProjectPath 
-}))
-
-// ✅ Good
-const mode = useAppState(s => s.mode)
-const path = useAppState(s => s.activeProjectPath)
-
-// ✅ Also Good (如果 state 中已有这个对象)
-const session = useAppState(s => s.activeSession)
-```
-
-### Anti-Pattern 3: 全局状态存储 UI 临时状态
-
-**What:** 将组件内部的 UI 状态 (如 hover, focus) 存储在全局 state。
-
-**Why bad:** 污染全局状态，增加复杂度。
-
-**Instead:** 使用 useState 管理组件内部状态。
-
-```typescript
-// ❌ Bad
-const isHovered = useAppState(s => s.sidebarHovered)
-const setAppState = useSetAppState()
-<div onMouseEnter={() => setAppState(prev => ({ ...prev, sidebarHovered: true }))}>
-
-// ✅ Good
-const [isHovered, setIsHovered] = useState(false)
-<div onMouseEnter={() => setIsHovered(true)}>
-```
-
-### Anti-Pattern 4: 多个独立的 Store
-
-**What:** 为不同功能创建多个独立的 store。
-
-**Why bad:** 增加状态同步复杂度，难以追踪数据流。
-
-**Instead:** 使用单一 store，通过命名空间组织。
-
-```typescript
-// ❌ Bad
-const useProjectStore = create(...)
-const useSessionStore = create(...)
-const useUIStore = create(...)
-
-// ✅ Good
-const useAppShellStore = create({
-  // Project namespace
-  activeProjectPath: null,
-  recentProjects: [],
+  it('should navigate back', () => {
+    const { pushNavigation, goBack, navigationIndex } = useAppShellStore.getState()
+    pushNavigation('project-home')
+    pushNavigation('project-sessions')
+    goBack()
+    expect(navigationIndex).toBe(0)
+  })
   
-  // Session namespace
-  activeSession: null,
-  sessionHistory: [],
+  it('should search sessions', () => {
+    const { setSearchQuery, searchResults } = useAppShellStore.getState()
+    setSearchQuery('test')
+    expect(searchResults.length).toBeGreaterThan(0)
+  })
+})
+
+// Test component rendering
+describe('LeftSidebar', () => {
+  it('should render projects list', () => {
+    render(<LeftSidebar />)
+    expect(screen.getByText('Projects')).toBeInTheDocument()
+  })
   
-  // UI namespace
-  rightPanelOpen: false,
-  bottomPanelExpanded: false,
+  it('should render search input', () => {
+    render(<LeftSidebar />)
+    expect(screen.getByPlaceholderText('Search sessions')).toBeInTheDocument()
+  })
 })
 ```
 
-## Scalability Considerations
+### Integration Tests (E2E with Playwright)
+```typescript
+// Existing E2E tests need updates
+test('should create new session', async ({ page }) => {
+  // Click "New session" in LeftSidebar (new location)
+  await page.click('[data-testid="new-session-button"]')
+  
+  // Verify session created
+  await expect(page.locator('.conversation-transcript')).toBeVisible()
+})
 
-| Concern | At 100 users | At 10K users | At 1M users |
-|---------|--------------|--------------|-------------|
-| **状态管理性能** | 无影响 (单用户) | 无影响 (单用户) | 无影响 (单用户) |
-| **组件渲染性能** | Selector 优化足够 | 需要虚拟化列表 | 需要虚拟化 + 懒加载 |
-| **会话历史存储** | 本地文件足够 | 需要分页加载 | 需要数据库 + 索引 |
-| **实时同步** | 不需要 | 不需要 | 不需要 (本地优先) |
+test('should navigate back and forward', async ({ page }) => {
+  await page.click('[data-testid="project-home"]')
+  await page.click('[data-testid="project-sessions"]')
+  await page.click('[data-testid="nav-back"]')
+  
+  // Verify navigation
+  await expect(page.locator('[data-testid="project-home"]')).toBeVisible()
+})
 
-**注：** 当前产品定位是单用户桌面应用，扩展性考虑主要在于单个用户的长期使用 (大量会话历史)，而非多用户并发。
+test('should search sessions', async ({ page }) => {
+  await page.fill('[data-testid="search-input"]', 'test')
+  await expect(page.locator('[data-testid="search-results"]')).toBeVisible()
+})
+```
 
-## Sources
+### Visual Regression Tests
+```typescript
+// Capture screenshots for visual comparison
+test('TopToolbar matches official design', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.toolbar')).toHaveScreenshot('toolbar.png')
+})
 
-- 官方源码分析：`claude-code-source-code-v2.1.88/src/state/`
-- 官方组件分析：`claude-code-source-code-v2.1.88/src/components/`
-- 当前实现：`src/app/state/appShellStore.ts`
-- React 18 文档：useSyncExternalStore API
-- Zustand 文档：https://github.com/pmndrs/zustand
+test('LeftSidebar matches official design', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.sidebar')).toHaveScreenshot('sidebar.png')
+})
+
+test('Empty state matches official design', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.empty-state')).toHaveScreenshot('empty-state.png')
+})
+```
+
+## Migration Risks & Mitigations
+
+### Risk 1: State Management Complexity
+**Risk:** 移除大量状态可能破坏现有功能
+**Mitigation:** 
+- 分阶段移除，每次移除后运行 E2E 测试
+- 先 comment out 而非直接删除，验证无影响后再删除
+- 保留 git 分支，随时回滚
+- 使用 TypeScript 类型检查捕获引用错误
+
+### Risk 2: Component Coupling
+**Risk:** 组件间依赖可能导致重构困难
+**Mitigation:**
+- 先重构 AppShell 布局，再重写子组件
+- 使用 feature flags 控制新旧 UI 切换
+- 保留旧组件文件在 `_archived/` 直到新组件验证完成
+- 逐个组件迁移，每个组件完成后验证功能
+
+### Risk 3: Service Layer Breaking Changes
+**Risk:** 误改服务层 API 导致 Tauri 调用失败
+**Mitigation:**
+- **不修改服务层** — 只修改 UI 组件和 store
+- 运行现有 E2E 测试验证服务调用
+- 使用 TypeScript 确保类型安全
+- Code review 重点检查服务层调用
+
+### Risk 4: Visual Inconsistency
+**Risk:** 新 UI 与官方设计不一致
+**Mitigation:**
+- 使用官方 v2.1.88 源码作为参考
+- 截图对比工具验证视觉一致性
+- 设计 review 阶段确认对齐
+- 使用 Storybook 隔离组件开发
+
+### Risk 5: Performance Regression
+**Risk:** 新 UI 渲染性能下降
+**Mitigation:**
+- 使用 React DevTools Profiler 监控渲染性能
+- 使用 selector 优化 Zustand 订阅
+- 虚拟化长列表 (sessions, projects)
+- Memoize 昂贵的计算和组件
+
+## Performance Considerations
+
+### Zustand Store Optimization
+```typescript
+// Use selectors to prevent unnecessary re-renders
+const activeSession = useAppShellStore((state) => state.activeSession)
+
+// Instead of
+const { activeSession, /* ... 50 other fields */ } = useAppShellStore()
+```
+
+### Component Memoization
+```typescript
+// Memoize expensive components
+const SessionRow = React.memo(({ session }) => {
+  // ...
+})
+
+// Memoize derived data
+const sortedSessions = useMemo(() => {
+  return sessionHistory.sort((a, b) => 
+    Number(b.lastActivityAt) - Number(a.lastActivityAt)
+  )
+}, [sessionHistory])
+```
+
+### Lazy Loading
+```typescript
+// Lazy load heavy components
+const Customize = React.lazy(() => import('./Customize'))
+
+// Render with Suspense
+<Suspense fallback={<Spinner />}>
+  <Customize />
+</Suspense>
+```
+
+### Virtual Scrolling
+```typescript
+// For long session lists
+import { FixedSizeList } from 'react-window'
+
+<FixedSizeList
+  height={600}
+  itemCount={sessionHistory.length}
+  itemSize={80}
+  width="100%"
+>
+  {({ index, style }) => (
+    <SessionRow 
+      key={sessionHistory[index].id}
+      session={sessionHistory[index]} 
+      style={style}
+    />
+  )}
+</FixedSizeList>
+```
+
+## Accessibility (WCAG Compliance)
+
+### Keyboard Navigation
+```typescript
+// Ensure all interactive elements are keyboard accessible
+<button
+  onClick={handleClick}
+  onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+  aria-label="New session"
+  tabIndex={0}
+>
+  New session
+</button>
+```
+
+### Screen Reader Support
+```typescript
+// Use semantic HTML and ARIA labels
+<nav aria-label="Projects">
+  <ul role="list">
+    {projects.map(project => (
+      <li key={project.id} role="listitem">
+        <button aria-label={`Open ${project.name}`}>
+          {project.name}
+        </button>
+      </li>
+    ))}
+  </ul>
+</nav>
+```
+
+### Focus Management
+```typescript
+// Manage focus after navigation
+useEffect(() => {
+  if (activeSession) {
+    document.getElementById('prompt-input')?.focus()
+  }
+}, [activeSession])
+```
+
+### Color Contrast
+```css
+/* Ensure WCAG AA compliance (4.5:1 for normal text) */
+.button-primary {
+  background: #0066cc; /* Contrast ratio: 4.52:1 on white */
+  color: #ffffff;
+}
+
+.text-secondary {
+  color: #666666; /* Contrast ratio: 5.74:1 on white */
+}
+```
+
+## Summary
+
+新 UI 完全复刻官方体验，但保留现有架构优势：
+
+**保留 (Preserve):**
+- Zustand 状态管理模式
+- Tauri 服务层 API
+- React 组件数据流
+- E2E 测试框架
+- 核心业务逻辑
+
+**重构 (Refactor):**
+- AppShell 布局结构
+- CenterWorkspace 对话流
+- State 结构调整
+
+**重写 (Rewrite):**
+- TopToolbar 极简顶栏
+- LeftSidebar 新结构
+
+**移除 (Remove):**
+- RightPanel 右侧抽屉
+- BottomPanel 底部托盘
+- 审批流 UI
+- 审查面板 UI
+
+**集成策略：**
+1. UI 层完全重构，服务层零改动
+2. 状态管理保留模式，调整结构
+3. 数据流不变：UI → store → service → Tauri
+4. 分阶段构建，每阶段验证功能完整性
+
+**构建顺序：**
+State Preparation (1-2d) → Layout Refactor (1d) → TopToolbar (2-3d) → LeftSidebar (3-4d) → CenterWorkspace (2-3d) → Visual Polish (2-3d)
+
+**Total: 11-16 days**
+
+**风险控制：**
+- 分支开发，随时回滚
+- TypeScript 类型检查
+- E2E 测试覆盖
+- 视觉回归测试
+- 逐步迁移，不破坏现有功能
+
+这种集成方式最大化复用现有架构，最小化风险，确保新 UI 快速交付且质量可控。
