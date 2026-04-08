@@ -1,0 +1,60 @@
+.topActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.primaryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--primary-bg, #2563eb);
+  color: var(--primary-fg, #ffffff);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.primaryButton:hover {
+  background: var(--primary-bg-hover, #1d4ed8);
+}
+
+.primaryButton:active {
+  background: var(--primary-bg-active, #1e40af);
+}
+
+.iconButtons {
+  display: flex;
+  gap: 4px;
+}
+
+.iconButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.iconButton:hover {
+  background: var(--hover-bg, #f3f4f6);
+  color: var(--text-primary, #111827);
+  border-color: var(--border-hover, #d1d5db);
+}
+
+.iconButton:active {
+  background: var(--active-bg, #e5e7eb);
+}

@@ -2,6 +2,7 @@ import { Clock3, Folder, FolderOpen, MessageSquare } from 'lucide-react'
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
 import { KeyboardShortcutHint } from '../components/KeyboardShortcutHint'
+import { SidebarTopActions } from '../components/SidebarTopActions'
 
 function formatRelativeTime(timestamp: string) {
   const delta = Date.now() - Number(timestamp)
@@ -84,6 +85,9 @@ export function LeftSidebar() {
 
   return (
     <div className="sidebar">
+      {/* Top actions */}
+      <SidebarTopActions />
+
       {/* Project picker at top */}
       <section className="sidebar__project-picker">
         <div className="sidebar__project-name">{projectName}</div>
