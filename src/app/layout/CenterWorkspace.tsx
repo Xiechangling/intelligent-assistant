@@ -15,6 +15,7 @@ import {
 import { FormEvent, KeyboardEvent } from 'react'
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
+import { useInputHistory } from '../hooks/useInputHistory'
 import type {
   DesktopChooserRow,
   DesktopSessionHeader,
@@ -686,14 +687,24 @@ function Composer({
   submitPrompt: () => Promise<void>
   disabled: boolean
 }) {
+  // Integrate input history
+  const { addToHistory, handleKeyDown: handleHistoryKeyDown, historySize } = useInputHistory(draftPrompt, setDraftPrompt)
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    // Add to history before submitting
+    addToHistory(draftPrompt)
     submitPrompt().catch(() => undefined)
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Handle history navigation first
+    handleHistoryKeyDown(event)
+
+    // Then handle submit
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
       event.preventDefault()
+      addToHistory(draftPrompt)
       submitPrompt().catch(() => undefined)
     }
   }
@@ -743,6 +754,9 @@ function Composer({
       <div className="composer__footer">
         <span>{buttonLabel}</span>
         <span>Ctrl/Cmd + Enter</span>
+        {historySize > 0 && (
+          <span className="composer__history-hint">↑/↓ to browse history ({historySize})</span>
+        )}
       </div>
     </form>
   )
