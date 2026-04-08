@@ -75,6 +75,10 @@ export function RightPanel() {
     setRightPanelView,
     skillToggles,
     toggleSkill,
+    keybindingsEnabled,
+    macOSOptionMappingEnabled,
+    setKeybindingsEnabled,
+    setMacOSOptionMappingEnabled,
     getDesktopWorkflow,
   } = useAppShellStore()
   const [credentialDraft, setCredentialDraft] = useState('')
@@ -299,6 +303,43 @@ export function RightPanel() {
                     </button>
                   )
                 })}
+              </div>
+            </div>
+
+            <div className="right-panel__section">
+              <div className="right-panel__settings-header">
+                <div>
+                  <h2 className="right-panel__heading">Keyboard shortcuts</h2>
+                  <p className="right-panel__section-copy">Global keybindings for faster navigation.</p>
+                </div>
+              </div>
+              <div className="right-panel__settings-list">
+                <button className="right-panel__settings-item" onClick={() => setKeybindingsEnabled(!keybindingsEnabled)}>
+                  <div className="right-panel__settings-item-head">
+                    <div>
+                      <strong>Enable global keyboard shortcuts</strong>
+                      <span>{keybindingsEnabled ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    <small>{keybindingsEnabled ? 'On' : 'Off'}</small>
+                  </div>
+                  <div className="right-panel__settings-item-meta">
+                    <span>ctrl+t: New session · ctrl+o: Open project · ctrl+e: Settings</span>
+                  </div>
+                </button>
+                {keybindingsEnabled && (
+                  <button className="right-panel__settings-item" onClick={() => setMacOSOptionMappingEnabled(!macOSOptionMappingEnabled)}>
+                    <div className="right-panel__settings-item-head">
+                      <div>
+                        <strong>Enable macOS Option key mapping</strong>
+                        <span>{macOSOptionMappingEnabled ? 'Enabled' : 'Disabled'}</span>
+                      </div>
+                      <small>{macOSOptionMappingEnabled ? 'On' : 'Off'}</small>
+                    </div>
+                    <div className="right-panel__settings-item-meta">
+                      <span>Option+t (†), Option+o (ø), Option+e (´) also work on macOS</span>
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
 

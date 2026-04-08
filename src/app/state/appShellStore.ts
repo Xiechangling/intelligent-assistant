@@ -85,6 +85,8 @@ interface AppShellState {
   presets: ReviewPreset[]
   activePresetId: string | null
   skillToggles: SkillToggle[]
+  keybindingsEnabled: boolean
+  macOSOptionMappingEnabled: boolean
   setMode: (mode: AppMode) => void
   setActiveProject: (project: ProjectRecord | null) => void
   setRecentProjects: (projects: ProjectRecord[]) => void
@@ -106,6 +108,8 @@ interface AppShellState {
   savePreset: (name: string) => void
   applyPreset: (presetId: string) => void
   toggleSkill: (skillId: string) => void
+  setKeybindingsEnabled: (enabled: boolean) => void
+  setMacOSOptionMappingEnabled: (enabled: boolean) => void
   loadSessionHistory: (filter?: SessionHistoryFilter) => Promise<void>
   applySessionHistoryFilter: (projectPath: string | null) => Promise<void>
   createProjectSession: () => Promise<void>
@@ -690,6 +694,8 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
   presets: [],
   activePresetId: null,
   skillToggles: defaultSkillToggles,
+  keybindingsEnabled: true,
+  macOSOptionMappingEnabled: true,
   setMode: (mode) =>
     set((state) => {
       if (state.pendingProposal && mode !== state.mode) {
@@ -815,6 +821,8 @@ export const useAppShellStore = create<AppShellState>((set, get) => ({
           : skill,
       ),
     })),
+  setKeybindingsEnabled: (enabled) => set({ keybindingsEnabled: enabled }),
+  setMacOSOptionMappingEnabled: (enabled) => set({ macOSOptionMappingEnabled: enabled }),
   loadSessionHistory: async (filter) => {
     const nextFilter = filter ?? get().sessionHistoryFilter
     set({ sessionHistoryStatus: 'loading', sessionHistoryError: null, sessionHistoryFilter: nextFilter })

@@ -4,10 +4,17 @@ import { LeftSidebar } from './LeftSidebar'
 import { RightPanel } from './RightPanel'
 import { TopToolbar } from './TopToolbar'
 import { useAppShellStore } from '../state/appShellStore'
+import { useGlobalKeybindings } from '../hooks/useGlobalKeybindings'
 
 export function AppShell() {
-  const { bottomPanelExpanded, executionRecord, pendingProposal, rightPanelOpen } = useAppShellStore()
+  const { bottomPanelExpanded, executionRecord, pendingProposal, rightPanelOpen, keybindingsEnabled, macOSOptionMappingEnabled } = useAppShellStore()
   const showBottomPanel = bottomPanelExpanded || Boolean(pendingProposal) || Boolean(executionRecord)
+
+  // Register global keybindings
+  useGlobalKeybindings({
+    enabled: keybindingsEnabled,
+    macOSOptionMapping: macOSOptionMappingEnabled,
+  })
 
   return (
     <div className={`app-shell ${rightPanelOpen ? 'app-shell--drawer-open' : ''} ${showBottomPanel ? 'app-shell--bottom-open' : ''}`}>
