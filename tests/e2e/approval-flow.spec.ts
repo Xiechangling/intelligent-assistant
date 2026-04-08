@@ -54,7 +54,7 @@ test('auto-focuses approval flow with exact action labels and context fields', a
 
   await openProjectApprovalFlow(page)
 
-  await expect(page.locator('.toolbar__status-chip')).toHaveText('Awaiting approval')
+  await expect(page.locator('.workspace__session-header .workspace__status-pill')).toHaveText('Awaiting approval')
   await expect(page.getByRole('main').getByRole('button', { name: 'Approve and run' })).toBeVisible()
   await expect(page.getByRole('main').getByRole('button', { name: 'Reject command' })).toBeVisible()
   await expect(page.getByText('Workspace path', { exact: true })).toBeVisible()
@@ -126,7 +126,7 @@ test('blocks mode switching while approval is pending so the proposal stays acti
     pendingProposalId: 'proposal-switch-block',
     executionStatus: 'awaiting-approval',
   })
-  await expect(page.locator('.toolbar__status-chip')).toHaveText('Awaiting approval')
+  await expect(page.locator('.workspace__session-header .workspace__status-pill')).toHaveText('Awaiting approval')
   await expect(page.locator('.bottom-panel__approval-actions').getByRole('button', { name: 'Approve and run' })).toBeVisible()
 })
 

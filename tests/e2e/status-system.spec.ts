@@ -61,6 +61,6 @@ test('shows canonical status labels in toolbar as exact copy', async ({ page }) 
     }, status)
 
     const expectedToolbarStatus = status === 'Failed' ? 'Needs attention' : status
-    await expect(page.locator('.toolbar__status-chip')).toHaveText(expectedToolbarStatus)
+    await expect(page.locator('.workspace__session-header .workspace__status-pill')).toHaveText(expectedToolbarStatus)
   }
 })
