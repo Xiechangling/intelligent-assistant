@@ -8,22 +8,22 @@
 
 **Core value:** 100% 复刻官方 Claude Code Desktop 的视觉、布局、交互和信息架构，打造高保真的官方体验
 
-**Current focus:** Phase 7 - 技术准备与基础组件
+**Current focus:** Phase 8 - 核心布局重构
 
 ## Current Position
 
-**Phase:** 7 / 10
-**Plan:** 5 / 5 (Complete)
-**Status:** Phase 7 complete, ready for Phase 8
+**Phase:** 8 / 10
+**Plan:** 7 / 7 (Awaiting Verification)
+**Status:** Wave 1-3 complete, awaiting Wave 4 human verification
 
 **Progress:**
 ```
-[█████░░░░░░░░░░░░░░░] 25% (1/4 phases)
+[████████░░░░░░░░░░░░] 40% (2/4 phases)
 ```
 
 **Phase breakdown:**
 - Phase 7: 技术准备与基础组件 - Complete (5/5 plans)
-- Phase 8: 核心布局重构 - Not started
+- Phase 8: 核心布局重构 - Awaiting Verification (6/7 plans complete)
 - Phase 9: 增强交互功能 - Not started
 - Phase 10: 视觉对齐与打磨 - Not started
 
@@ -32,17 +32,17 @@
 **Requirements:**
 - Total: 30 requirements
 - Mapped: 30/30 (100%)
-- Delivered: 4/30 (13%)
+- Delivered: 10/30 (33%)
 
 **Phases:**
 - Total: 4 phases
 - Complete: 1/4 (25%)
-- In progress: 0/4 (0%)
+- In progress: 1/4 (25%)
 
 **Plans:**
-- Total: 5 (Phase 7)
-- Complete: 5
-- In progress: 0
+- Total: 12 (Phase 7 + Phase 8)
+- Complete: 11
+- In progress: 1 (awaiting verification)
 
 **Test coverage:**
 - E2E tests: TBD
@@ -60,13 +60,20 @@
 | 从 Phase 7 开始编号 | 延续 v2.2 里程碑的阶段编号（v2.2 结束于 Phase 5） | 2026-04-08 |
 | 使用 CSS Modules 统一样式方法论 | 避免全局样式冲突，提升可维护性 | 2026-04-08 |
 | 添加 TypeScript 声明文件支持 react-speech-recognition | 解决类型安全问题，提升开发体验 | 2026-04-08 |
+| 归档旧面板而非删除 | 保留 git 历史，便于未来参考 | 2026-04-09 |
+| 两列 Grid 布局（360px + 1fr） | 简化布局，对齐官方设计 | 2026-04-09 |
+| 导航历史由 appShellStore 管理 | 集中状态管理，支持前进后退 | 2026-04-09 |
+| 窗口控制集成到 TopToolbar | 原生桌面体验，使用 Tauri API | 2026-04-09 |
+| Search 和 Customize 按钮为 Phase 9 预留 | 分阶段实现，避免范围蔓延 | 2026-04-09 |
 
 ### Active TODOs
 
-- [ ] 开始 Phase 8 规划（`/gsd-plan-phase 8`）
-- [ ] 设计极简顶栏布局（窗口控制 + 前进后退 + 三模式标签）
-- [ ] 设计左侧栏重构方案（360px 固定宽度）
-- [ ] 准备移除右侧抽屉和底部托盘的迁移方案
+- [ ] 执行 Phase 8 Plan 08-07 人工验证
+- [ ] 启动开发服务器验证布局重构成果
+- [ ] 测试窗口控制（最小化/最大化/关闭）
+- [ ] 测试导航按钮（前进/后退）
+- [ ] 验证两列布局渲染正确
+- [ ] 开始 Phase 9 规划（增强交互功能）
 
 ### Known Blockers
 
@@ -74,6 +81,15 @@
 
 ### Recent Changes
 
+- 2026-04-09: 完成 Phase 8 Wave 1-3（Plans 08-01 到 08-06）
+- 2026-04-09: 清理 appShellStore 移除审批/审查状态，添加导航历史
+- 2026-04-09: 归档 RightPanel 和 BottomPanel 到 _archived 目录
+- 2026-04-09: 简化 AppShell 为两列 Grid 布局（360px + 1fr）
+- 2026-04-09: 重写 TopToolbar 集成 WindowControls 和 NavigationButtons
+- 2026-04-09: 重写 LeftSidebar 添加 SidebarTopActions 组件
+- 2026-04-09: 清理 CenterWorkspace 移除内联审批/审查卡片
+- 2026-04-09: 修复 TypeScript 编译错误（类型导入、getDesktopWorkflow 实现）
+- 2026-04-09: 创建 Phase 8 SUMMARY.md，7 个原子提交完成
 - 2026-04-08: 完成 Phase 7 所有 5 个计划（07-01 到 07-05）
 - 2026-04-08: 安装 react-speech-recognition 4.0.1
 - 2026-04-08: 扩展 appShellStore 添加 currentMode, voiceInputActive, attachments 状态
@@ -87,34 +103,38 @@
 
 ### What Just Happened
 
-完成了 Phase 7 的所有 5 个计划：
-- 安装了 react-speech-recognition 4.0.1 依赖
-- 扩展了 appShellStore 添加新状态（currentMode, voiceInputActive, attachments）
-- 创建了 VoiceInput 组件（语音输入）
-- 创建了 ModeTabs 组件（三模式切换）
-- 创建了 AttachmentList 组件（附件列表）
-- 扩展了 attachmentService 添加 useDragDrop hook
+完成了 Phase 8 Wave 1-3 的所有 6 个计划：
+- 清理了 appShellStore 移除审批/审查状态，添加导航历史管理
+- 归档了 RightPanel 和 BottomPanel 到 _archived 目录
+- 简化了 AppShell 为两列 Grid 布局（360px 左侧栏 + 自适应中央区域）
+- 重写了 TopToolbar 集成窗口控制和导航按钮
+- 重写了 LeftSidebar 添加顶部操作区（New session/Search/Customize）
+- 清理了 CenterWorkspace 移除内联审批/审查卡片
+- 修复了所有 TypeScript 编译错误
+- 创建了 Phase 8 SUMMARY.md
 
-所有组件使用 CSS Modules，TypeScript 编译通过，5 个原子提交已完成。
+所有组件使用 CSS Modules，TypeScript 编译通过，7 个原子提交已完成。
 
 ### What's Next
 
-1. 开始 Phase 8 规划（`/gsd-plan-phase 8`）
-2. Phase 8 重点：核心布局重构（极简顶栏、左侧栏重构、移除右侧抽屉和底部托盘）
-3. 需要设计极简顶栏布局和左侧栏重构方案
+1. 执行 Phase 8 Plan 08-07：人工验证布局重构成果
+2. 启动开发服务器：`npm run dev`
+3. 验证窗口控制、导航按钮、两列布局是否正常工作
+4. 完成验证后开始 Phase 9 规划（增强交互功能）
 
 ### Context for Next Session
 
 **如果继续 v2.3 工作：**
-- Phase 7 已完成，所有基础组件已创建
-- 下一步是 Phase 8：核心布局重构
-- 技术栈已确定：保持现有栈 + react-speech-recognition
+- Phase 7 和 Phase 8 Wave 1-3 已完成
+- 下一步是 Phase 8 Wave 4：人工验证（Plan 08-07）
+- 布局已简化为两列设计，旧面板已归档
 - 所有新组件使用 CSS Modules 统一样式方法论
 
-**如果需要验证 Phase 7 成果：**
-- 5 个 SUMMARY.md 文件已创建在 `.planning/phases/07-tech-prep-foundation/`
-- 5 个原子提交：ef0a34e, 992e97c, 2207704, 03c3630, bd83568
-- TypeScript 编译通过，无类型错误
+**如果需要验证 Phase 8 成果：**
+- SUMMARY.md 文件已创建在 `.planning/phases/08-core-layout-refactor/08-SUMMARY.md`
+- 7 个原子提交：fd150d5, c99e971, 4813dfe, 1bef3e0, 2e87fc4, 828c94e, c893895
+- TypeScript 编译通过，构建成功
+- 需要运行 `npm run dev` 进行功能验证
 
 ## Previous Milestone: v2.2
 
