@@ -17,6 +17,9 @@ test.describe('Drawer Panel', () => {
     // Verify right panel content is visible
     await expect(page.locator('.right-panel')).toBeVisible()
 
+    // Wait for drawer animation to complete (200ms transition)
+    await page.waitForTimeout(300)
+
     // Verify drawer has width (>= 300px)
     const drawerBox = await drawer.boundingBox()
     expect(drawerBox?.width).toBeGreaterThanOrEqual(300)

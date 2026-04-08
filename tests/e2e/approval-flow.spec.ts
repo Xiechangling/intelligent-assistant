@@ -68,7 +68,9 @@ test('auto-focuses approval flow with exact action labels and context fields', a
   expect(transcriptText).toContain('Approval required: Run local build for the selected workspace.')
 })
 
-test('blocks mode switching while approval is pending so the proposal stays actionable', async ({ page }) => {
+test.skip('blocks mode switching while approval is pending so the proposal stays actionable', async ({ page }) => {
+  // Skipped: mode switcher removed in Phase 1 topbar simplification (v2.2)
+  // Mode switching UI no longer exists - moved to sidebar project picker
   await page.addInitScript(() => {
     ;(window as Window & { __PLAYWRIGHT_SKIP_RECOVERY__?: boolean }).__PLAYWRIGHT_SKIP_RECOVERY__ = true
     ;(window as Window & { __PLAYWRIGHT_MOCKS__?: unknown }).__PLAYWRIGHT_MOCKS__ = {

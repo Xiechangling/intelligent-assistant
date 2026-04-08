@@ -136,7 +136,8 @@ test('shows no workspace entry state with exact copy', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'No workspace selected' })).toBeVisible()
   await expect(page.getByText('Open a local workspace to resume a coding session, attach to recent work, or start a new session.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Open workspace' })).toBeVisible()
+  // Use exact match to avoid ambiguity with sidebar button
+  await expect(page.getByRole('button', { name: 'Open workspace', exact: true })).toBeVisible()
 })
 
 test('shows a desktop model selector and updates the future default model from the toolbar', async ({ page }) => {
