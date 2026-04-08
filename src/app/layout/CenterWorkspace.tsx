@@ -468,14 +468,18 @@ function InlineApprovalSummary({
   onApprove: () => Promise<void>
   onReject: () => Promise<void>
 }) {
-  const { pendingProposal } = useAppShellStore()
+  const { pendingProposal, setBottomPanelExpanded } = useAppShellStore()
 
   if (!pendingProposal) {
     return null
   }
 
+  const handleCardClick = () => {
+    setBottomPanelExpanded(true)
+  }
+
   return (
-    <div className="workspace__inline-surface workspace__inline-surface--approval">
+    <div className="workspace__inline-surface workspace__inline-surface--approval workspace__inline-surface--clickable" onClick={handleCardClick}>
       <div className="workspace__inline-surface-header">
         <div>
           <span className="conversation-event__eyebrow workspace__inline-badge">
@@ -489,7 +493,7 @@ function InlineApprovalSummary({
       <p className="workspace__inline-copy">
         Review the command details in the bottom panel, then approve or reject the command for this workspace.
       </p>
-      <div className="approval-card__actions">
+      <div className="approval-card__actions" onClick={(e) => e.stopPropagation()}>
         <button className="workspace__secondary-action" onClick={() => onReject().catch(() => undefined)}>
           Reject command
         </button>
@@ -502,7 +506,7 @@ function InlineApprovalSummary({
 }
 
 function InlineWorkflowStatusSummary() {
-  const { executionRecord } = useAppShellStore()
+  const { executionRecord, setBottomPanelExpanded, setBottomPanelTab } = useAppShellStore()
 
   if (!executionRecord || executionRecord.status === 'awaiting-approval' || executionRecord.reviewState === 'ready') {
     return null
@@ -534,8 +538,20 @@ function InlineWorkflowStatusSummary() {
               ? 'Execution finished without changed files. You can continue the session or inspect the output for more detail.'
               : 'Execution finished and the session is ready for the next step.'
 
+  const isClickable = executionRecord.status === 'running' || executionRecord.status === 'failed'
+
+  const handleCardClick = () => {
+    if (isClickable) {
+      setBottomPanelExpanded(true)
+      setBottomPanelTab('output')
+    }
+  }
+
   return (
-    <div className={`workspace__inline-surface workspace__inline-surface--status ${executionRecord.reviewState === 'unavailable' ? 'workspace__inline-surface--warning' : ''}`}>
+    <div
+      className={`workspace__inline-surface workspace__inline-surface--status ${executionRecord.reviewState === 'unavailable' ? 'workspace__inline-surface--warning' : ''} ${isClickable ? 'workspace__inline-surface--clickable' : ''}`}
+      onClick={handleCardClick}
+    >
       <div className="workspace__inline-surface-header">
         <div>
           <span className="conversation-event__eyebrow workspace__inline-badge">
@@ -552,10 +568,16 @@ function InlineWorkflowStatusSummary() {
 }
 
 function InlineReviewSummary() {
-  const { executionRecord, selectReviewFile } = useAppShellStore()
+  const { executionRecord, selectReviewFile, setBottomPanelExpanded, setBottomPanelTab } = useAppShellStore()
 
   if (!executionRecord || executionRecord.reviewState !== 'ready' || executionRecord.changedFiles.length === 0) {
     return null
+  }
+
+  const handleFileClick = (fileId: string) => {
+    selectReviewFile(fileId)
+    setBottomPanelExpanded(true)
+    setBottomPanelTab('review')
   }
 
   return (
@@ -573,7 +595,7 @@ function InlineReviewSummary() {
       <p className="workspace__inline-copy">Open review in the bottom panel to inspect changed files and continue the session.</p>
       <div className="review-summary-card__list review-summary-card__list--inline">
         {executionRecord.changedFiles.map((file) => (
-          <button key={file.id} className="review-summary-card__file" onClick={() => selectReviewFile(file.id)}>
+          <button key={file.id} className="review-summary-card__file" onClick={() => handleFileClick(file.id)}>
             <div>
               <strong>{file.path}</strong>
               <span>{file.summary}</span>
