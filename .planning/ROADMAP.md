@@ -83,7 +83,7 @@
 ### Phase 3: 左侧栏导航化与键盘交互 ⏳
 **Duration:** 3-4 days  
 **Priority:** MEDIUM  
-**Status:** pending
+**Status:** planned
 
 **Goal:** 左侧栏导航化简化信息架构，键盘交互系统提升效率
 
@@ -92,14 +92,11 @@
 - REQ-08: 全局快捷键系统（ctrl+t/o/e）
 - REQ-10: 输入框历史导航（↑/↓）
 
-**Deliverables:**
-- [ ] 纯导航列表左侧栏（移除品牌区、展开/折叠）
-- [ ] 项目选择器移至左侧栏顶部
-- [ ] useGlobalKeybindings hook
-- [ ] 全局快捷键注册（ctrl+t/o/e）
-- [ ] macOS Option 键映射（†/π/ø）
-- [ ] 输入框历史导航（↑/↓）
-- [ ] 键盘导航 E2E 测试
+**Plans:** 4 plans
+- [ ] 03-01-PLAN.md — 左侧栏导航化（移除品牌区、展开/折叠，项目选择器移至顶部）
+- [ ] 03-02-PLAN.md — 全局快捷键系统（useGlobalKeybindings hook，ctrl+t/o/e，macOS Option 映射）
+- [ ] 03-03-PLAN.md — 输入框历史导航（↑/↓，localStorage 持久化）
+- [ ] 03-04-PLAN.md — 键盘导航 E2E 测试
 
 **Success Criteria:**
 - 左侧栏仅包含项目列表 + 会话历史
@@ -109,6 +106,7 @@
 - E2E 测试通过
 
 **Dependencies:** Phase 1（快捷键提示组件）
+
 
 ---
 
