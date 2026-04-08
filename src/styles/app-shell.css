@@ -670,7 +670,7 @@ pre {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.032) 0%, rgba(255, 255, 255, 0.016) 100%);
-  padding: 14px 16px;
+  padding: var(--space-2);
   flex-shrink: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
   transition: all 0.15s ease;
@@ -681,8 +681,8 @@ pre {
 }
 
 .workspace__inline-surface--clickable:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.032) 100%);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: var(--border-highlight);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
@@ -759,8 +759,8 @@ pre {
   border: 1px solid var(--border-subtle);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.015) 100%);
   color: var(--text-primary);
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -782,7 +782,45 @@ pre {
 .review-summary-card__file:hover,
 .right-panel__settings-item:hover,
 .bottom-panel__review-file:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.022) 100%);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+}
+
+.right-panel__settings-item--active {
+  background: var(--bg-accent-soft);
+  border-color: var(--accent);
+}
+
+.sidebar__session-item {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border: none;
+}
+
+.sidebar__session-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar__session-item--active {
+  background: var(--bg-accent-soft);
+  color: var(--accent-strong);
+}
+
+.bottom-panel__review-file {
+  border-left: 3px solid transparent;
+}
+
+.bottom-panel__review-file:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bottom-panel__review-file--active {
+  background: var(--bg-accent-soft);
+  border-left-color: var(--accent);
 }
 
 .review-summary-card__file strong,
@@ -797,12 +835,6 @@ pre {
 .right-panel__helper {
   font-size: 12px;
   color: var(--text-tertiary);
-}
-
-.right-panel__settings-item--active,
-.bottom-panel__review-file--active {
-  border-color: var(--border-strong);
-  background: linear-gradient(180deg, rgba(120, 142, 255, 0.15) 0%, rgba(94, 112, 220, 0.1) 100%);
 }
 
 .conversation-transcript {
@@ -1176,6 +1208,66 @@ pre {
   margin-left: 4px;
 }
 
+.workspace__input,
+.right-panel__credential-input,
+input[type="text"],
+input[type="password"] {
+  min-height: 36px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  font-size: 14px;
+  width: 100%;
+}
+
+.workspace__input::placeholder,
+.right-panel__credential-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.workspace__input:focus,
+.right-panel__credential-input:focus {
+  border-color: var(--accent);
+}
+
+.workspace__prompt-input,
+textarea {
+  min-height: 80px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  width: 100%;
+}
+
+.workspace__prompt-input:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
+
+.toolbar__model-select,
+select {
+  height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.toolbar__model-select:hover,
+select:hover {
+  border-color: var(--border-highlight);
+}
+
 .right-panel__credential-input {
   width: 100%;
   resize: vertical;
@@ -1195,24 +1287,74 @@ pre {
 }
 
 .workspace__primary-action,
-.workspace__secondary-action {
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-size: 13px;
+.right-panel__inline-action {
+  height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
   cursor: pointer;
 }
 
-.workspace__primary-action {
-  border: 1px solid rgba(150, 171, 255, 0.08);
-  background: linear-gradient(180deg, #8fa4ff 0%, #6f84e9 100%);
-  color: #f8fbff;
-  box-shadow: 0 12px 28px rgba(111, 132, 233, 0.16);
+.workspace__primary-action:hover,
+.right-panel__inline-action:hover {
+  background: var(--accent-strong);
+}
+
+.workspace__primary-action:active,
+.right-panel__inline-action:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+}
+
+.workspace__primary-action:disabled,
+.right-panel__inline-action:disabled {
+  background: var(--color-inactive);
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .workspace__secondary-action {
+  height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
-  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.workspace__secondary-action:hover {
+  border-color: var(--border-highlight);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.toolbar__action,
+.sidebar__action {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar__action:hover,
+.sidebar__action:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.toolbar__action:active,
+.sidebar__action:active {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .workspace__primary-action:active,
