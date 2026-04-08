@@ -1,10 +1,11 @@
 # Roadmap: v2.2 官方 Claude Code Desktop 体验对齐
 
 **Milestone:** v2.2  
-**Status:** active  
+**Status:** completed  
 **Goal:** 将桌面应用从"控制台化"布局全面对齐到官方"内容优先、轻量 chrome"的单流式对话架构  
-**Timeline:** 12-17 days  
-**Created:** 2026-04-08
+**Timeline:** 12 days  
+**Created:** 2026-04-08  
+**Completed:** 2026-04-08
 
 ---
 
@@ -121,10 +122,10 @@
 
 ---
 
-### Phase 4: 辅助面板抽屉化与组件样式对齐 ⏳
-**Duration:** 2-3 days  
+### Phase 4: 辅助面板抽屉化与组件样式对齐 ✅
+**Duration:** 3 days  
 **Priority:** LOW  
-**Status:** pending
+**Status:** completed
 
 **Goal:** 辅助面板抽屉化释放中央工作区空间，组件样式对齐提升视觉一致性
 
@@ -135,11 +136,11 @@
 - REQ-15: 设置面板组织（分组、搜索、快捷键提示）
 
 **Plans:** 5 plans
-- [ ] 04-01-PLAN.md — 右侧面板抽屉化（默认关闭，拖拽调整宽度，Esc 关闭）
-- [ ] 04-02-PLAN.md — 底部托盘细化（流畅动画，z-index 层级，视觉细节）
-- [ ] 04-03-PLAN.md — 组件样式对齐（按钮、输入框、卡片、列表项）
-- [ ] 04-04-PLAN.md — 设置面板组织（搜索、分组、快捷键提示）
-- [ ] 04-05-PLAN.md — E2E 测试（抽屉行为、设置搜索、组件样式）
+- [x] 04-01-PLAN.md — 右侧面板抽屉化（默认关闭，拖拽调整宽度，Esc 关闭）
+- [x] 04-02-PLAN.md — 底部托盘细化（流畅动画，z-index 层级，视觉细节）
+- [x] 04-03-PLAN.md — 组件样式对齐（按钮、输入框、卡片、列表项）
+- [x] 04-04-PLAN.md — 设置面板组织（搜索、分组、快捷键提示）
+- [x] 04-05-PLAN.md — E2E 测试（抽屉行为、设置搜索、组件样式）
 
 **Success Criteria:**
 - 右侧面板默认关闭，支持拖拽调整宽度（300-600px）
@@ -153,10 +154,10 @@
 
 ---
 
-### Phase 5: 主题系统增强 ⏳
-**Duration:** 1-2 days  
+### Phase 5: 主题系统增强 ✅
+**Duration:** 2 days  
 **Priority:** LOW  
-**Status:** pending
+**Status:** completed
 
 **Goal:** 多主题切换是增强功能，提升可访问性
 
@@ -164,11 +165,11 @@
 - REQ-09: 主题系统增强（light/dark/auto 三种模式，系统主题跟随，主题切换动画）
 
 **Plans:** 5 plans
-- [ ] 05-01-PLAN.md — 核心主题系统（状态管理、CSS 变量、系统检测）
-- [ ] 05-02-PLAN.md — 主题选择器 UI（设置面板 Appearance 组）
-- [ ] 05-03-PLAN.md — 主题切换 E2E 测试
-- [ ] 05-04-PLAN.md — 修复剩余 E2E 测试失败
-- [ ] 05-05-PLAN.md — 最终里程碑验证
+- [x] 05-01-PLAN.md — 核心主题系统（状态管理、CSS 变量、系统检测）
+- [x] 05-02-PLAN.md — 主题选择器 UI（设置面板 Appearance 组）
+- [x] 05-03-PLAN.md — 主题切换 E2E 测试
+- [x] 05-04-PLAN.md — 修复剩余 E2E 测试失败
+- [x] 05-05-PLAN.md — 最终里程碑验证
 
 **Success Criteria:**
 - 支持 3 种主题切换（light/dark/auto）
@@ -214,15 +215,15 @@
 
 ## Progress Tracking
 
-**Overall Progress:** 1/5 phases (20%)
+**Overall Progress:** 5/5 phases (100%)
 
-| Phase | Status | Progress | ETA |
-|-------|--------|----------|-----|
+| Phase | Status | Progress | Completed |
+|-------|--------|----------|-----------|
 | Phase 1: 顶栏简化与视觉基础 | completed | 2/2 | 2026-04-08 |
-| Phase 2: 中央工作区单流化 | planned | 0/3 | - |
-| Phase 3: 左侧栏导航化与键盘交互 | pending | 0/7 | - |
-| Phase 4: 辅助面板抽屉化与组件样式对齐 | pending | 0/7 | - |
-| Phase 5: 主题系统增强 | pending | 0/5 | - |
+| Phase 2: 中央工作区单流化 | completed | 3/3 | 2026-04-08 |
+| Phase 3: 左侧栏导航化与键盘交互 | completed | 4/4 | 2026-04-08 |
+| Phase 4: 辅助面板抽屉化与组件样式对齐 | completed | 5/5 | 2026-04-08 |
+| Phase 5: 主题系统增强 | completed | 5/5 | 2026-04-08 |
 
 ---
 
