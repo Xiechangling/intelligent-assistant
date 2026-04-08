@@ -713,33 +713,17 @@ function Composer({
 
 function SessionHeader({ header, mode }: { header: DesktopSessionHeader; mode: 'project' | 'conversation' }) {
   return (
-    <div className="workspace__session-header-card">
+    <div className="workspace__session-header">
       <div className="workspace__session-header-main">
-        <div>
+        <div className="workspace__session-title-group">
           <span className="workspace__eyebrow">{mode === 'project' ? 'Attached session' : 'Conversation session'}</span>
           <h2>{header.title}</h2>
-          <p>{header.currentActivitySummary ?? 'Ready to continue work.'}</p>
         </div>
         <StatusChip status={header.workflowStatus} />
       </div>
-      <div className="workspace__session-meta-grid">
-        <div>
-          <span>Workspace</span>
-          <strong>{header.projectName}</strong>
-        </div>
-        <div>
-          <span>Model</span>
-          <strong>{header.modelId}</strong>
-        </div>
-        <div>
-          <span>Last activity</span>
-          <strong>{formatRelativeTime(header.lastActivityAt)}</strong>
-        </div>
-        <div>
-          <span>Session state</span>
-          <strong>{header.workflowStatus}</strong>
-        </div>
-      </div>
+      {header.currentActivitySummary && (
+        <p className="workspace__session-activity">{header.currentActivitySummary}</p>
+      )}
     </div>
   )
 }
