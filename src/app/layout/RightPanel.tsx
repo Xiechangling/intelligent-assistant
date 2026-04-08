@@ -68,11 +68,14 @@ export function RightPanel() {
     pendingProposal,
     presets,
     rightPanelView,
+    rightPanelOpen,
+    rightPanelWidth,
     savePreset,
     applyPreset,
     setCredentialStatus,
     setRightPanelOpen,
     setRightPanelView,
+    setRightPanelWidth,
     skillToggles,
     toggleSkill,
     keybindingsEnabled,
@@ -85,6 +88,7 @@ export function RightPanel() {
   const [baseUrlDraft, setBaseUrlDraft] = useState('')
   const [credentialMessage, setCredentialMessage] = useState<string | null>(null)
   const [credentialBusy, setCredentialBusy] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
 
   useEffect(() => {
     if (rightPanelView === 'settings') {
@@ -93,6 +97,37 @@ export function RightPanel() {
       })
     }
   }, [rightPanelView])
+
+  // Resize handle logic
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX
+      setRightPanelWidth(newWidth)
+    }
+
+    const handleMouseUp = () => setIsResizing(false)
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing, setRightPanelWidth])
+
+  // Esc key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && rightPanelOpen) {
+        setRightPanelOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [rightPanelOpen, setRightPanelOpen])
 
   const effectiveModel = activeSessionModelOverride ?? globalDefaultModel
   const desktopWorkflow = getDesktopWorkflow()
@@ -136,8 +171,14 @@ export function RightPanel() {
     }
   }
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true)
+    e.preventDefault()
+  }
+
   return (
     <div className="right-panel">
+      <div className="right-panel__resize-handle" onMouseDown={handleMouseDown} />
       <div className="right-panel__drawer-header">
         <div className="right-panel__drawer-title">
           {rightPanelView === 'context' ? <FileText size={15} /> : <Settings size={15} />}

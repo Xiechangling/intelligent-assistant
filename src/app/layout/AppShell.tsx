@@ -7,7 +7,7 @@ import { useAppShellStore } from '../state/appShellStore'
 import { useGlobalKeybindings } from '../hooks/useGlobalKeybindings'
 
 export function AppShell() {
-  const { bottomPanelExpanded, executionRecord, pendingProposal, rightPanelOpen, keybindingsEnabled, macOSOptionMappingEnabled } = useAppShellStore()
+  const { bottomPanelExpanded, executionRecord, pendingProposal, rightPanelOpen, rightPanelWidth, keybindingsEnabled, macOSOptionMappingEnabled } = useAppShellStore()
   const showBottomPanel = bottomPanelExpanded || Boolean(pendingProposal) || Boolean(executionRecord)
 
   // Register global keybindings
@@ -17,7 +17,10 @@ export function AppShell() {
   })
 
   return (
-    <div className={`app-shell ${rightPanelOpen ? 'app-shell--drawer-open' : ''} ${showBottomPanel ? 'app-shell--bottom-open' : ''}`}>
+    <div
+      className={`app-shell ${rightPanelOpen ? 'app-shell--drawer-open' : ''} ${showBottomPanel ? 'app-shell--bottom-open' : ''}`}
+      style={{ '--right-panel-width': `${rightPanelWidth}px` } as React.CSSProperties}
+    >
       <header className="app-shell__top app-shell__top--sticky">
         <TopToolbar />
       </header>

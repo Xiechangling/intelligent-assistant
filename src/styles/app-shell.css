@@ -107,10 +107,11 @@ pre {
   background: linear-gradient(180deg, #151920 0%, #101216 100%);
   position: relative;
   overflow: hidden;
+  transition: grid-template-columns 200ms ease-out;
 }
 
 .app-shell--drawer-open {
-  --drawer-width: 320px;
+  --drawer-width: var(--right-panel-width, 400px);
 }
 
 .app-shell__top {
@@ -158,8 +159,8 @@ pre {
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
-  transform: translateX(20px);
-  transition: transform 180ms ease, opacity 180ms ease;
+  transform: translateX(100%);
+  transition: transform 200ms ease-out, opacity 200ms ease-out;
 }
 
 .app-shell__drawer--open {
@@ -1035,6 +1036,23 @@ pre {
   flex-direction: column;
   gap: var(--space-4);
   height: 100%;
+  position: relative;
+}
+
+.right-panel__resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background-color 160ms ease;
+  z-index: 10;
+}
+
+.right-panel__resize-handle:hover {
+  background: var(--border-highlight);
 }
 
 .right-panel__drawer-header {
