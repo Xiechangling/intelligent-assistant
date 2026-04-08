@@ -24,7 +24,14 @@
   3. ModeTabs 组件可以渲染三个模式标签（Chat/Cowork/Code）
   4. VoiceInput 组件可以显示语音输入按钮并响应点击
   5. AttachmentList 组件可以显示附件列表并支持删除操作
-**Plans**: TBD
+**Plans**: 5 plans in 2 waves
+
+Plans:
+- [ ] 07-01-PLAN.md — 安装 react-speech-recognition 依赖
+- [ ] 07-02-PLAN.md — 调整 appShellStore 状态结构
+- [ ] 07-03-PLAN.md — 创建 VoiceInput 组件
+- [ ] 07-04-PLAN.md — 创建 ModeTabs 组件
+- [ ] 07-05-PLAN.md — 创建 AttachmentList 组件和扩展 attachmentService
 
 ### Phase 8: 核心布局重构
 **Goal**: 实现官方 UI 的核心布局结构，移除旧功能，建立新的信息架构
@@ -70,10 +77,10 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 7. 技术准备与基础组件 | 0/0 | Not started | - |
+| 7. 技术准备与基础组件 | 0/5 | Planning complete | - |
 | 8. 核心布局重构 | 0/0 | Not started | - |
 | 9. 增强交互功能 | 0/0 | Not started | - |
 | 10. 视觉对齐与打磨 | 0/0 | Not started | - |
 
 ---
-*Last updated: 2026-04-08*
+*Last updated: 2026-04-09*
