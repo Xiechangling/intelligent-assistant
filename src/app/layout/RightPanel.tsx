@@ -1,4 +1,4 @@
-import { Check, FileText, Settings, X, Search } from 'lucide-react'
+import { Check, FileText, Settings, X, Search, Sun, Moon, Monitor } from 'lucide-react'
 import { FormEvent, useEffect, useState } from 'react'
 import { KeyboardShortcutHint } from '../components/KeyboardShortcutHint'
 import {
@@ -84,6 +84,8 @@ export function RightPanel() {
     setKeybindingsEnabled,
     setMacOSOptionMappingEnabled,
     getDesktopWorkflow,
+    theme,
+    setTheme,
   } = useAppShellStore()
   const [credentialDraft, setCredentialDraft] = useState('')
   const [baseUrlDraft, setBaseUrlDraft] = useState('')
@@ -273,6 +275,48 @@ export function RightPanel() {
                 />
               </div>
             </div>
+
+            {(!searchQuery || 'appearance theme light dark auto'.includes(searchQuery.toLowerCase())) && (
+              <div className="right-panel__section">
+                <h3 className="right-panel__heading">Appearance</h3>
+                <div className="right-panel__settings-list">
+                  <div className="right-panel__settings-item">
+                    <div className="right-panel__settings-item-head">
+                      <div>
+                        <strong>Theme</strong>
+                        <span>Choose your preferred color scheme</span>
+                      </div>
+                    </div>
+                    <div className="right-panel__theme-selector">
+                      <button
+                        className={`right-panel__theme-option ${theme === 'light' ? 'right-panel__theme-option--active' : ''}`}
+                        onClick={() => setTheme('light')}
+                        title="Light theme"
+                      >
+                        <Sun size={16} />
+                        <span>Light</span>
+                      </button>
+                      <button
+                        className={`right-panel__theme-option ${theme === 'dark' ? 'right-panel__theme-option--active' : ''}`}
+                        onClick={() => setTheme('dark')}
+                        title="Dark theme"
+                      >
+                        <Moon size={16} />
+                        <span>Dark</span>
+                      </button>
+                      <button
+                        className={`right-panel__theme-option ${theme === 'auto' ? 'right-panel__theme-option--active' : ''}`}
+                        onClick={() => setTheme('auto')}
+                        title="Auto (follows system)"
+                      >
+                        <Monitor size={16} />
+                        <span>Auto</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {(!searchQuery || 'connection settings api key base url credentials'.includes(searchQuery.toLowerCase())) && (
               <div className="right-panel__section">

@@ -2361,6 +2361,48 @@ select:hover {
   gap: 6px;
 }
 
+.right-panel__theme-selector {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.right-panel__theme-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.right-panel__theme-option:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-highlight);
+  color: var(--text-primary);
+}
+
+.right-panel__theme-option--active {
+  background: var(--bg-accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.right-panel__theme-option--active:hover {
+  background: var(--bg-accent-deep);
+}
+
+.right-panel__theme-option span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .right-panel__status-inline {
   gap: 6px;
   color: var(--accent-strong);
