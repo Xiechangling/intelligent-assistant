@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1.88
-milestone_name: milestone
-status: v2.1.88 milestone archived
-stopped_at: Milestone archived; awaiting next milestone definition
-last_updated: "2026-04-08T07:00:00.000Z"
+milestone: v2.2
+milestone_name: 官方体验对齐
+status: defining_requirements
+stopped_at: Defining requirements for v2.2
+last_updated: "2026-04-08T08:00:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # STATE
@@ -20,15 +20,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Make Claude Code-style local coding workflows significantly easier to configure, control, and reuse from a desktop interface without losing the power of project-aware agent execution.
-**Current focus:** No active phase — define the next milestone
+**Current focus:** Defining requirements for v2.2 milestone
 
 ## Current Status
 
-- Milestone `v2.1.88` is archived and audited as passed.
-- Archive files now live in `.planning/milestones/`.
-- Current `ROADMAP.md` is collapsed to the archived milestone summary.
-- `REQUIREMENTS.md` has been retired pending the next milestone definition.
-- Resume from: `/gsd-new-milestone`
+- Milestone `v2.2` started 2026-04-08
+- Phase: Not started (defining requirements)
+- Plan: —
+- Status: Defining requirements
+- Last activity: 2026-04-08 — Milestone v2.2 started
 
 ## Phase Summary
 

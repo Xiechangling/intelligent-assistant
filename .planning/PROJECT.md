@@ -8,7 +8,19 @@ Intelligent Assistant is a shipped Windows-first desktop application that turns 
 
 Make Claude Code-style local coding workflows significantly easier to configure, control, and reuse from a desktop interface without losing the power of project-aware agent execution.
 
-## Current State
+## Current Milestone: v2.2 官方体验对齐
+
+**Goal:** 将当前桌面应用的 UI/IA/交互全面对齐到官方 Claude Code Desktop 客户端体验，消除"自制工具感"，达到高拟真度。
+
+**Target features:**
+- 顶栏去控制台化，改为内容中心的轻量 chrome
+- 左侧栏从状态导航树改为官方风格的项目/会话选择器
+- 中央工作区从多块拼装改为官方单流式对话体验
+- 右侧抽屉和底部托盘收敛为官方风格的轻量辅助面板
+- 整体视觉 token（间距/颜色/字体/圆角/阴影）对齐官方设计系统
+- 交互模式对齐官方行为（hover/focus/transition/快捷键）
+
+## Previous Milestone
 
 - **Shipped milestone:** `v2.1.88` on 2026-04-08
 - **Delivery status:** 6 phases complete, 20 plans complete, milestone audit passed
