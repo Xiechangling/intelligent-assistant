@@ -67,14 +67,14 @@ export function AppShell() {
   })
 
   return (
-    <div className="app-shell">
-      <header className="app-shell__top">
+    <div className="app-shell" data-testid="app-shell" data-theme={theme}>
+      <header className="app-shell__top" data-testid="top-toolbar">
         <TopToolbar />
       </header>
-      <aside className="app-shell__left">
+      <aside className="app-shell__left" data-testid="left-sidebar">
         <LeftSidebar onSearchClick={() => setSearchOpen(true)} />
       </aside>
-      <main className="app-shell__center">
+      <main className="app-shell__center" data-testid="center-workspace">
         <CenterWorkspace />
       </main>
       <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

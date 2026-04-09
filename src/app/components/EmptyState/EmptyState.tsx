@@ -15,12 +15,12 @@ export function EmptyState({ mode }: EmptyStateProps) {
     : 'Send a message without opening a workspace.'
 
   return (
-    <div className={styles.emptyState}>
-      <div className={styles.mascot}>
+    <div className={styles.emptyState} data-testid="empty-state">
+      <div className={styles.mascot} data-testid="panda-mascot">
         <img src="/panda-mascot.svg" alt="Panda mascot" />
       </div>
-      <h3 className={styles.title}>{title}</h3>
-      <p className={styles.description}>{description}</p>
+      <h3 className={styles.title} data-testid="empty-state-title">{title}</h3>
+      <p className={styles.description} data-testid="empty-state-description">{description}</p>
     </div>
   )
 }

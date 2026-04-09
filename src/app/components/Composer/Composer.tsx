@@ -102,7 +102,7 @@ export function Composer({
   const currentModel = activeSessionModelOverride || globalDefaultModel;
 
   return (
-    <form className={`composer composer--${mode}`} onSubmit={handleSubmit}>
+    <form className={`composer composer--${mode}`} onSubmit={handleSubmit} data-testid="composer">
       <CommandHint draftPrompt={draftPrompt} />
       <div className="composer__toolbar">
         <button

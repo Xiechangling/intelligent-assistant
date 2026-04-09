@@ -66,13 +66,14 @@ export function CustomizeMenu({ isOpen, onClose, anchorRef }: CustomizeMenuProps
   };
 
   return (
-    <div ref={menuRef} className={styles.customizeMenu}>
+    <div ref={menuRef} className={styles.customizeMenu} data-testid="customize-menu">
       {/* Theme section */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Theme</div>
         <button
           className={`${styles.menuItem} ${theme === 'light' ? styles.active : ''}`}
           onClick={() => handleThemeChange('light')}
+          data-testid="theme-light"
         >
           <Check className={styles.checkIcon} size={16} />
           <span>Light</span>
@@ -80,6 +81,7 @@ export function CustomizeMenu({ isOpen, onClose, anchorRef }: CustomizeMenuProps
         <button
           className={`${styles.menuItem} ${theme === 'dark' ? styles.active : ''}`}
           onClick={() => handleThemeChange('dark')}
+          data-testid="theme-dark"
         >
           <Check className={styles.checkIcon} size={16} />
           <span>Dark</span>
@@ -87,6 +89,7 @@ export function CustomizeMenu({ isOpen, onClose, anchorRef }: CustomizeMenuProps
         <button
           className={`${styles.menuItem} ${theme === 'auto' ? styles.active : ''}`}
           onClick={() => handleThemeChange('auto')}
+          data-testid="theme-auto"
         >
           <Check className={styles.checkIcon} size={16} />
           <span>System</span>

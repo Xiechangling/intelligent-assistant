@@ -62,7 +62,7 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
   return (
     <div className={styles.overlay}>
-      <div ref={modalRef} className={styles.modal}>
+      <div ref={modalRef} className={styles.modal} data-testid="global-search">
         <input
           ref={inputRef}
           type="text"

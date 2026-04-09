@@ -46,6 +46,7 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
           onClick={handleCustomize}
           className={styles.iconButton}
           aria-label="Customize"
+          data-testid="customize-button"
         >
           <Settings size={18} strokeWidth={2} />
         </button>
