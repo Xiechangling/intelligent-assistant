@@ -92,12 +92,12 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 10-01-PLAN.md — 优化浅色主题（接近白色背景，柔和分隔线）
-- [ ] 10-02-PLAN.md — 统一图标（lucide-react，2px 描边，统一尺寸）
-- [ ] 10-03-PLAN.md — 统一圆角（24px 卡片圆角）
-- [ ] 10-04-PLAN.md — 统一动画过渡（200ms ease-out）
-- [ ] 10-05-PLAN.md — 创建空状态设计（大熊猫吉祥物 + 欢迎文案）
-- [ ] 10-06-PLAN.md — 更新 E2E 测试（Page Object Model + data-testid）
+- [x] 10-01-PLAN.md — 优化浅色主题（接近白色背景，柔和分隔线）
+- [x] 10-02-PLAN.md — 统一图标（lucide-react，2px 描边，统一尺寸）
+- [x] 10-03-PLAN.md — 统一圆角（24px 卡片圆角）
+- [x] 10-04-PLAN.md — 统一动画过渡（200ms ease-out）
+- [x] 10-05-PLAN.md — 创建空状态设计（大熊猫吉祥物 + 欢迎文案）
+- [x] 10-06-PLAN.md — 更新 E2E 测试（Page Object Model + data-testid）
 - [ ] 10-07-PLAN.md — 人工验证所有视觉对齐需求
 
 ## Progress
@@ -107,7 +107,7 @@ Plans:
 | 7. 技术准备与基础组件 | 5/5 | Complete | 2026-04-08 |
 | 8. 核心布局重构 | 7/7 | Complete | 2026-04-09 |
 | 9. 增强交互功能 | 7/7 | Complete | 2026-04-09 |
-| 10. 视觉对齐与打磨 | 0/0 | Not started | - |
+| 10. 视觉对齐与打磨 | 6/7 | In Progress | - |
 
 ---
 *Last updated: 2026-04-08*
