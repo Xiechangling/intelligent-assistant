@@ -88,8 +88,17 @@ Plans:
   3. 用户看到圆角卡片（border-radius: 24px）应用到所有消息卡片
   4. 用户在无会话时看到大熊猫吉祥物 + 欢迎文案的空状态设计
   5. 用户在界面交互时看到流畅的动画过渡（200ms ease-out）
-**Plans**: TBD
+**Plans**: 7 plans in 5 waves
 **UI hint**: yes
+
+Plans:
+- [ ] 10-01-PLAN.md — 优化浅色主题（接近白色背景，柔和分隔线）
+- [ ] 10-02-PLAN.md — 统一图标（lucide-react，2px 描边，统一尺寸）
+- [ ] 10-03-PLAN.md — 统一圆角（24px 卡片圆角）
+- [ ] 10-04-PLAN.md — 统一动画过渡（200ms ease-out）
+- [ ] 10-05-PLAN.md — 创建空状态设计（大熊猫吉祥物 + 欢迎文案）
+- [ ] 10-06-PLAN.md — 更新 E2E 测试（Page Object Model + data-testid）
+- [ ] 10-07-PLAN.md — 人工验证所有视觉对齐需求
 
 ## Progress
 
