@@ -104,6 +104,32 @@ export function Composer({
   return (
     <form className={`composer composer--${mode}`} onSubmit={handleSubmit} data-testid="composer">
       <CommandHint draftPrompt={draftPrompt} />
+      <PendingAttachments attachments={pendingAttachments} onRemove={removePendingAttachment} />
+      <div className="composer__field">
+        <textarea
+          id="assistant-prompt"
+          className="composer__input"
+          value={draftPrompt}
+          onChange={(event) => setDraftPrompt(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={
+            mode === 'project'
+              ? 'Describe the next task for this workspace.'
+              : 'Send a message to the assistant.'
+          }
+          rows={mode === 'project' ? 3 : 4}
+          disabled={disabled}
+        />
+        <button
+          className="workspace__primary-action composer__send"
+          type="submit"
+          disabled={disabled || !draftPrompt.trim()}
+          aria-label={buttonLabel}
+          title={mode === 'project' ? 'Ctrl/Cmd + Enter sends instruction' : 'Ctrl/Cmd + Enter sends message'}
+        >
+          <SendHorizontal size={18} strokeWidth={2} />
+        </button>
+      </div>
       <div className="composer__toolbar">
         <button
           className="workspace__secondary-action"
@@ -139,32 +165,6 @@ export function Composer({
           </select>
           <VoiceInput onTranscript={handleVoiceTranscript} />
         </div>
-      </div>
-      <PendingAttachments attachments={pendingAttachments} onRemove={removePendingAttachment} />
-      <div className="composer__field">
-        <textarea
-          id="assistant-prompt"
-          className="composer__input"
-          value={draftPrompt}
-          onChange={(event) => setDraftPrompt(event.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            mode === 'project'
-              ? 'Describe the next task for this workspace.'
-              : 'Send a message to the assistant.'
-          }
-          rows={mode === 'project' ? 3 : 4}
-          disabled={disabled}
-        />
-        <button
-          className="workspace__primary-action composer__send"
-          type="submit"
-          disabled={disabled || !draftPrompt.trim()}
-          aria-label={buttonLabel}
-          title={mode === 'project' ? 'Ctrl/Cmd + Enter sends instruction' : 'Ctrl/Cmd + Enter sends message'}
-        >
-          <SendHorizontal size={18} strokeWidth={2} />
-        </button>
       </div>
       <div className="composer__footer">
         <span>{buttonLabel}</span>

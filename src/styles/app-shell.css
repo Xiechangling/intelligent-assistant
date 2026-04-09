@@ -1,8 +1,8 @@
 :root {
   color-scheme: dark;
   font-family: Inter, "Segoe UI", sans-serif;
-  background: #101216;
-  color: #eef2f7;
+  background: var(--bg-app, #101216);
+  color: var(--text-primary, #eef2f7);
   --bg-app: #0f1116;
   --bg-shell: #151920;
   --bg-sidebar: #12151b;
@@ -45,19 +45,19 @@
 [data-theme='light'] {
   color-scheme: light;
   --bg-app: #ffffff;
-  --bg-shell: #ffffff;
+  --bg-shell: #fafafa;
   --bg-sidebar: #fefefe;
   --bg-canvas: #ffffff;
-  --bg-panel: #fafafa;
+  --bg-panel: #f5f5f5;
   --bg-elevated: #ffffff;
-  --bg-muted: #f5f5f5;
+  --bg-muted: #f0f0f0;
   --bg-soft: #fefefe;
   --bg-accent-soft: rgba(120, 142, 255, 0.08);
   --bg-accent-deep: rgba(94, 112, 220, 0.12);
   --bg-surface-warm: rgba(0, 0, 0, 0.02);
-  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-subtle: rgba(0, 0, 0, 0.12);
   --border-strong: rgba(120, 142, 255, 0.3);
-  --border-highlight: rgba(0, 0, 0, 0.08);
+  --border-highlight: rgba(0, 0, 0, 0.15);
   --text-primary: #1a1a1a;
   --text-secondary: #525252;
   --text-tertiary: #737373;
@@ -84,9 +84,7 @@ body,
 }
 
 body {
-  background:
-    radial-gradient(circle at top, rgba(43, 52, 74, 0.26) 0%, rgba(15, 17, 22, 0) 34%),
-    linear-gradient(180deg, #151922 0%, #0f1116 100%);
+  background: var(--bg-app);
   color: var(--text-primary);
   overflow: hidden;
   transition: background-color 200ms ease, color 200ms ease;
@@ -164,7 +162,7 @@ pre {
   justify-content: space-between;
   height: 48px;
   padding: 0 12px;
-  background: var(--bg-primary, #12151b);
+  background: var(--bg-shell);
 }
 
 .top-toolbar__left {
@@ -996,10 +994,9 @@ pre {
 }
 
 .composer {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--border-subtle);
   padding: 14px 24px 20px;
-  background: linear-gradient(180deg, rgba(19, 22, 28, 0.72) 0%, rgba(13, 15, 19, 0.96) 42%, rgba(12, 14, 18, 0.99) 100%);
-  backdrop-filter: blur(18px);
+  background: var(--bg-panel);
   flex-shrink: 0;
 }
 
@@ -1062,20 +1059,20 @@ pre {
 .composer__input {
   width: 100%;
   resize: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.024) 100%);
+  background: var(--bg-elevated);
   color: var(--text-primary);
   padding: 17px 66px 17px 18px;
   line-height: 1.62;
   min-height: 88px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 12px 28px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .composer__input:focus {
   outline: none;
-  border-color: rgba(125, 152, 255, 0.42);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 0 3px rgba(125, 152, 255, 0.12), 0 16px 32px rgba(0, 0, 0, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--bg-accent-soft), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .composer__send {
@@ -1789,10 +1786,10 @@ select:hover {
 .workspace__summary-card,
 .workspace__spotlight,
 .workspace__new-session-bar {
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(31, 35, 44, 0.97) 0%, rgba(22, 25, 32, 0.985) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 20px 48px rgba(0, 0, 0, 0.18);
+  background: var(--bg-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .workspace__surface,
