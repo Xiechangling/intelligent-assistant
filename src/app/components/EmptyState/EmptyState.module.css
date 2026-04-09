@@ -1,0 +1,43 @@
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6, 48px);
+  text-align: center;
+  min-height: 400px;
+}
+
+.mascot {
+  width: 120px;
+  height: 120px;
+  margin-bottom: var(--space-4, 32px);
+  color: var(--text-tertiary);
+  opacity: 0.8;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.mascot:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.mascot img {
+  width: 100%;
+  height: 100%;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2, 16px) 0;
+}
+
+.description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin: 0;
+  line-height: 1.6;
+}

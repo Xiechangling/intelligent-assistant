@@ -7,6 +7,7 @@ import {
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
 import { Composer } from '../components/Composer'
+import { EmptyState } from '../components/EmptyState'
 import type {
   DesktopChooserRow,
   DesktopSessionHeader,
@@ -168,16 +169,7 @@ function Transcript({
   currentStageLabel: string | null
 }) {
   if (events.length === 0) {
-    return (
-      <div className="conversation-empty">
-        <h3>{mode === 'project' ? 'Start a coding session' : 'Start a conversation'}</h3>
-        <p>
-          {mode === 'project'
-            ? 'Describe the task for this workspace to begin an attached coding session.'
-            : 'Send a message without opening a workspace.'}
-        </p>
-      </div>
-    )
+    return <EmptyState mode={mode} />
   }
 
   return (
