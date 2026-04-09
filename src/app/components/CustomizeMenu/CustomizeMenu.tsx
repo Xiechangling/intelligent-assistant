@@ -6,7 +6,7 @@ import styles from './CustomizeMenu.module.css';
 interface CustomizeMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  anchorRef: React.RefObject<HTMLElement>;
+  anchorRef: React.RefObject<HTMLElement | null>;
 }
 
 export function CustomizeMenu({ isOpen, onClose, anchorRef }: CustomizeMenuProps) {

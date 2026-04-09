@@ -1,9 +1,13 @@
 import { Plus, Search, Settings } from 'lucide-react'
 import { useAppShellStore } from '../../state/appShellStore'
+import { CustomizeMenu } from '../CustomizeMenu'
+import { useState, useRef } from 'react'
 import styles from './SidebarTopActions.module.css'
 
 export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => void }) {
   const { createProjectSession } = useAppShellStore()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const customizeButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleNewSession = () => {
     createProjectSession().catch(() => undefined)
@@ -16,8 +20,7 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
   }
 
   const handleCustomize = () => {
-    // Stub for Phase 9
-    console.log('Customize clicked - to be implemented in Phase 9')
+    setMenuOpen(!menuOpen)
   }
 
   return (
@@ -39,6 +42,7 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
           <Search size={20} />
         </button>
         <button
+          ref={customizeButtonRef}
           onClick={handleCustomize}
           className={styles.iconButton}
           aria-label="Customize"
@@ -46,6 +50,11 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
           <Settings size={20} />
         </button>
       </div>
+      <CustomizeMenu
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        anchorRef={customizeButtonRef}
+      />
     </div>
   )
 }
