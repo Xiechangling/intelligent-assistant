@@ -1,17 +1,12 @@
 import {
   AlertTriangle,
   ArrowUpRight,
-  FileImage,
-  FilePlus2,
   FolderOpen,
   MessageSquare,
-  SendHorizontal,
-  X,
 } from 'lucide-react'
-import { FormEvent, KeyboardEvent } from 'react'
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
-import { useInputHistory } from '../hooks/useInputHistory'
+import { Composer } from '../components/Composer'
 import type {
   DesktopChooserRow,
   DesktopSessionHeader,
@@ -460,141 +455,6 @@ function NoSessionsState({ onStartNew }: { onStartNew: () => Promise<void> }) {
 }
 
 // Inline approval/review cards removed - Phase 8 simplification
-
-function CommandHint({ draftPrompt }: { draftPrompt: string }) {
-  const firstLine = draftPrompt.trim().split(/\n/)[0] ?? ''
-  if (!firstLine.startsWith('/')) {
-    return null
-  }
-
-  const commandName = firstLine.slice(1).split(/\s+/)[0] || 'command'
-  return (
-    <div className="composer__hint" role="status" aria-live="polite">
-      <strong>Slash command detected</strong>
-      <span>/{commandName} will be sent as Claude Code-style command input.</span>
-    </div>
-  )
-}
-
-function PendingAttachments({ attachments, onRemove }: { attachments: SessionAttachment[]; onRemove: (attachmentId: string) => void }) {
-  if (attachments.length === 0) {
-    return null
-  }
-
-  return (
-    <div className="composer__attachments">
-      {attachments.map((attachment) => (
-        <div key={attachment.id} className="composer__attachment-chip">
-          <div>
-            <strong>{attachment.name}</strong>
-            <span>
-              {attachment.kind} · {attachment.source}
-            </span>
-          </div>
-          <button type="button" className="composer__attachment-remove" onClick={() => onRemove(attachment.id)}>
-            <X size={12} />
-          </button>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function Composer({
-  mode,
-  draftPrompt,
-  pendingAttachments,
-  setDraftPrompt,
-  addFileAttachments,
-  addImageAttachments,
-  removePendingAttachment,
-  submitPrompt,
-  disabled,
-}: {
-  mode: 'project' | 'conversation'
-  draftPrompt: string
-  pendingAttachments: SessionAttachment[]
-  setDraftPrompt: (prompt: string) => void
-  addFileAttachments: () => Promise<void>
-  addImageAttachments: () => Promise<void>
-  removePendingAttachment: (attachmentId: string) => void
-  submitPrompt: () => Promise<void>
-  disabled: boolean
-}) {
-  // Integrate input history
-  const { addToHistory, handleKeyDown: handleHistoryKeyDown, historySize } = useInputHistory(draftPrompt, setDraftPrompt)
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    // Add to history before submitting
-    addToHistory(draftPrompt)
-    submitPrompt().catch(() => undefined)
-  }
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Handle history navigation first
-    handleHistoryKeyDown(event)
-
-    // Then handle submit
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-      event.preventDefault()
-      addToHistory(draftPrompt)
-      submitPrompt().catch(() => undefined)
-    }
-  }
-
-  const buttonLabel = mode === 'project' ? 'Send instruction' : 'Send message'
-
-  return (
-    <form className={`composer composer--${mode}`} onSubmit={handleSubmit}>
-      <CommandHint draftPrompt={draftPrompt} />
-      <div className="composer__toolbar">
-        <button className="workspace__secondary-action" type="button" onClick={() => addFileAttachments().catch(() => undefined)} disabled={disabled}>
-          <FilePlus2 size={14} />
-          <span>File</span>
-        </button>
-        <button className="workspace__secondary-action" type="button" onClick={() => addImageAttachments().catch(() => undefined)} disabled={disabled}>
-          <FileImage size={14} />
-          <span>Image</span>
-        </button>
-        <span className="composer__slash-hint">Type / to use slash commands</span>
-      </div>
-      <PendingAttachments attachments={pendingAttachments} onRemove={removePendingAttachment} />
-      <div className="composer__field">
-        <textarea
-          id="assistant-prompt"
-          className="composer__input"
-          value={draftPrompt}
-          onChange={(event) => setDraftPrompt(event.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            mode === 'project'
-              ? 'Describe the next task for this workspace.'
-              : 'Send a message to the assistant.'
-          }
-          rows={mode === 'project' ? 3 : 4}
-          disabled={disabled}
-        />
-        <button
-          className="workspace__primary-action composer__send"
-          type="submit"
-          disabled={disabled || !draftPrompt.trim()}
-          aria-label={buttonLabel}
-          title={mode === 'project' ? 'Ctrl/Cmd + Enter sends instruction' : 'Ctrl/Cmd + Enter sends message'}
-        >
-          <SendHorizontal size={15} />
-        </button>
-      </div>
-      <div className="composer__footer">
-        <span>{buttonLabel}</span>
-        <span>Ctrl/Cmd + Enter</span>
-        {historySize > 0 && (
-          <span className="composer__history-hint">↑/↓ to browse history ({historySize})</span>
-        )}
-      </div>
-    </form>
-  )
-}
 
 function SessionHeader({ header, mode }: { header: DesktopSessionHeader; mode: 'project' | 'conversation' }) {
   return (
