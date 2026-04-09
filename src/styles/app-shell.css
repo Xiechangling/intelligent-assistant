@@ -535,6 +535,20 @@ pre {
   color: var(--warning);
 }
 
+.sidebar__date-group {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 10px 6px 10px;
+  margin-top: 8px;
+}
+
+.sidebar__date-group:first-child {
+  margin-top: 0;
+}
+
 .workspace {
   height: 100%;
   min-height: 0;

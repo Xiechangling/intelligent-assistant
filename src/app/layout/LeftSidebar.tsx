@@ -3,6 +3,7 @@ import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
 import { KeyboardShortcutHint } from '../components/KeyboardShortcutHint'
 import { SidebarTopActions } from '../components/SidebarTopActions'
+import { useSessionGrouping } from '../hooks/useSessionGrouping'
 
 function formatRelativeTime(timestamp: string) {
   const delta = Date.now() - Number(timestamp)
@@ -64,6 +65,20 @@ export function LeftSidebar() {
   const desktopWorkflow = getDesktopWorkflow()
   const chooserRows = desktopWorkflow.chooser.rows.slice(0, 6)
   const workspaceProjects = recentProjects.filter((project) => project.path)
+
+  // Convert chooser rows to session records for grouping
+  const sessionRecords = chooserRows.map(row => ({
+    id: row.sessionId,
+    title: row.title,
+    updatedAt: row.lastActivityAt,
+    lastActivityAt: row.lastActivityAt,
+    projectName: row.projectName,
+    summary: row.summary,
+    workflowStatus: row.workflowStatus,
+    attention: row.attention
+  }))
+
+  const sessionGroups = useSessionGrouping(sessionRecords)
 
   const handleProjectPick = async () => {
     try {
@@ -130,7 +145,7 @@ export function LeftSidebar() {
         </ul>
       </section>
 
-      {/* Recent sessions - always visible */}
+      {/* Recent sessions - grouped by date */}
       <section className="sidebar__section">
         <div className="sidebar__section-header">
           <h2 className="sidebar__title-wrap">
@@ -139,38 +154,201 @@ export function LeftSidebar() {
           </h2>
         </div>
         {sessionHistory.length === 0 ? <p className="sidebar__helper">No recent sessions yet</p> : null}
-        <ul className="sidebar__list">
-          {chooserRows.map((row) => {
-            const isActive = row.sessionId === activeSession?.id
-            const badgeLabel = attentionLabel(row.attention)
-            return (
-              <li key={row.sessionId} className="sidebar__item">
-                <button
-                  className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
-                  onClick={() => resumeSession(row.sessionId)}
-                  title={row.title}
-                >
-                  <div className="sidebar__row-head sidebar__row-head--spread">
-                    <div className="sidebar__row-head">
-                      <MessageSquare size={13} />
-                      <strong>{row.title}</strong>
-                    </div>
-                    {badgeLabel ? (
-                      <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(row.attention)}`}>
-                        {badgeLabel}
-                      </span>
-                    ) : null}
-                  </div>
-                  <small>{row.projectName}</small>
-                  <small>{row.summary}</small>
-                  <small>
-                    {formatRelativeTime(row.lastActivityAt)} · {row.workflowStatus}
-                  </small>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+
+        {/* Today */}
+        {sessionGroups.today.length > 0 && (
+          <>
+            <div className="sidebar__date-group">Today</div>
+            <ul className="sidebar__list">
+              {sessionGroups.today.map((session: any) => {
+                const isActive = session.id === activeSession?.id
+                const badgeLabel = attentionLabel(session.attention)
+                return (
+                  <li key={session.id} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                      onClick={() => resumeSession(session.id)}
+                      title={session.title}
+                    >
+                      <div className="sidebar__row-head sidebar__row-head--spread">
+                        <div className="sidebar__row-head">
+                          <MessageSquare size={13} />
+                          <strong>{session.title}</strong>
+                        </div>
+                        {badgeLabel ? (
+                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(session.attention)}`}>
+                            {badgeLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>{session.projectName}</small>
+                      <small>{session.summary}</small>
+                      <small>
+                        {formatRelativeTime(session.lastActivityAt)} · {session.workflowStatus}
+                      </small>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
+
+        {/* Yesterday */}
+        {sessionGroups.yesterday.length > 0 && (
+          <>
+            <div className="sidebar__date-group">Yesterday</div>
+            <ul className="sidebar__list">
+              {sessionGroups.yesterday.map((session: any) => {
+                const isActive = session.id === activeSession?.id
+                const badgeLabel = attentionLabel(session.attention)
+                return (
+                  <li key={session.id} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                      onClick={() => resumeSession(session.id)}
+                      title={session.title}
+                    >
+                      <div className="sidebar__row-head sidebar__row-head--spread">
+                        <div className="sidebar__row-head">
+                          <MessageSquare size={13} />
+                          <strong>{session.title}</strong>
+                        </div>
+                        {badgeLabel ? (
+                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(session.attention)}`}>
+                            {badgeLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>{session.projectName}</small>
+                      <small>{session.summary}</small>
+                      <small>
+                        {formatRelativeTime(session.lastActivityAt)} · {session.workflowStatus}
+                      </small>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
+
+        {/* Last 7 Days */}
+        {sessionGroups.last7Days.length > 0 && (
+          <>
+            <div className="sidebar__date-group">Last 7 Days</div>
+            <ul className="sidebar__list">
+              {sessionGroups.last7Days.map((session: any) => {
+                const isActive = session.id === activeSession?.id
+                const badgeLabel = attentionLabel(session.attention)
+                return (
+                  <li key={session.id} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                      onClick={() => resumeSession(session.id)}
+                      title={session.title}
+                    >
+                      <div className="sidebar__row-head sidebar__row-head--spread">
+                        <div className="sidebar__row-head">
+                          <MessageSquare size={13} />
+                          <strong>{session.title}</strong>
+                        </div>
+                        {badgeLabel ? (
+                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(session.attention)}`}>
+                            {badgeLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>{session.projectName}</small>
+                      <small>{session.summary}</small>
+                      <small>
+                        {formatRelativeTime(session.lastActivityAt)} · {session.workflowStatus}
+                      </small>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
+
+        {/* Last 30 Days */}
+        {sessionGroups.last30Days.length > 0 && (
+          <>
+            <div className="sidebar__date-group">Last 30 Days</div>
+            <ul className="sidebar__list">
+              {sessionGroups.last30Days.map((session: any) => {
+                const isActive = session.id === activeSession?.id
+                const badgeLabel = attentionLabel(session.attention)
+                return (
+                  <li key={session.id} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                      onClick={() => resumeSession(session.id)}
+                      title={session.title}
+                    >
+                      <div className="sidebar__row-head sidebar__row-head--spread">
+                        <div className="sidebar__row-head">
+                          <MessageSquare size={13} />
+                          <strong>{session.title}</strong>
+                        </div>
+                        {badgeLabel ? (
+                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(session.attention)}`}>
+                            {badgeLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>{session.projectName}</small>
+                      <small>{session.summary}</small>
+                      <small>
+                        {formatRelativeTime(session.lastActivityAt)} · {session.workflowStatus}
+                      </small>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
+
+        {/* Older */}
+        {sessionGroups.older.length > 0 && (
+          <>
+            <div className="sidebar__date-group">Older</div>
+            <ul className="sidebar__list">
+              {sessionGroups.older.map((session: any) => {
+                const isActive = session.id === activeSession?.id
+                const badgeLabel = attentionLabel(session.attention)
+                return (
+                  <li key={session.id} className="sidebar__item">
+                    <button
+                      className={`sidebar__row ${isActive ? 'sidebar__row--active' : ''}`}
+                      onClick={() => resumeSession(session.id)}
+                      title={session.title}
+                    >
+                      <div className="sidebar__row-head sidebar__row-head--spread">
+                        <div className="sidebar__row-head">
+                          <MessageSquare size={13} />
+                          <strong>{session.title}</strong>
+                        </div>
+                        {badgeLabel ? (
+                          <span className={`sidebar__attention-pill sidebar__attention-pill--${attentionTone(session.attention)}`}>
+                            {badgeLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>{session.projectName}</small>
+                      <small>{session.summary}</small>
+                      <small>
+                        {formatRelativeTime(session.lastActivityAt)} · {session.workflowStatus}
+                      </small>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
       </section>
     </div>
   )
