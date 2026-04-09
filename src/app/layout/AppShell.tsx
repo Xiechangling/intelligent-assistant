@@ -8,7 +8,7 @@ import { useGlobalKeybindings } from '../hooks/useGlobalKeybindings'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
 export function AppShell() {
-  const { keybindingsEnabled, macOSOptionMappingEnabled, theme, createProjectSession, setCurrentMode } = useAppShellStore()
+  const { keybindingsEnabled, macOSOptionMappingEnabled, theme, createProjectSession, setCurrentMode, goBack, goForward } = useAppShellStore()
   const [searchOpen, setSearchOpen] = React.useState(false)
 
   // Apply theme immediately on mount to prevent flash
@@ -62,6 +62,8 @@ export function AppShell() {
     'ctrl+1': () => setCurrentMode('chat'),
     'ctrl+2': () => setCurrentMode('search'),
     'ctrl+3': () => setCurrentMode('navigate'),
+    'alt+arrowleft': () => goBack(),
+    'alt+arrowright': () => goForward(),
   })
 
   return (
