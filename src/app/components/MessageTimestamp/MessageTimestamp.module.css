@@ -1,0 +1,15 @@
+.timestamp {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #57606a);
+  opacity: 0.8;
+  cursor: default;
+}
+
+.timestamp:hover {
+  opacity: 1;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .timestamp {
+  color: var(--color-text-secondary, #8b949e);
+}
