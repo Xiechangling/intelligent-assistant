@@ -16,7 +16,7 @@ export function NavigationButtons() {
         aria-label="Go back"
         className={styles.button}
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={16} strokeWidth={2} />
       </button>
       <button
         onClick={goForward}
@@ -24,7 +24,7 @@ export function NavigationButtons() {
         aria-label="Go forward"
         className={styles.button}
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={16} strokeWidth={2} />
       </button>
     </div>
   )

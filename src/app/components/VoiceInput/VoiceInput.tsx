@@ -46,7 +46,7 @@ export function VoiceInput({ onTranscript }: VoiceInputProps) {
       onClick={handleToggle}
       aria-label={listening ? 'Stop voice input' : 'Start voice input'}
     >
-      {listening ? <MicOff size={20} /> : <Mic size={20} />}
+      {listening ? <MicOff size={18} strokeWidth={2} /> : <Mic size={18} strokeWidth={2} />}
     </button>
   )
 }

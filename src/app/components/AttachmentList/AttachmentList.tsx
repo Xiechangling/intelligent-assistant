@@ -16,9 +16,9 @@ export function AttachmentList() {
         <div key={attachment.id} className={styles.item}>
           <div className={styles.icon}>
             {attachment.type === 'image' ? (
-              <Image size={16} />
+              <Image size={16} strokeWidth={2} />
             ) : (
-              <File size={16} />
+              <File size={16} strokeWidth={2} />
             )}
           </div>
           <span className={styles.name}>{attachment.name}</span>
@@ -28,7 +28,7 @@ export function AttachmentList() {
             onClick={() => removeAttachment(attachment.id)}
             aria-label={`Remove ${attachment.name}`}
           >
-            <X size={16} />
+            <X size={14} strokeWidth={2} />
           </button>
         </div>
       ))}

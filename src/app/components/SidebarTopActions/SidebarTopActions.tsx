@@ -30,7 +30,7 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
         className={styles.primaryButton}
         aria-label="New session"
       >
-        <Plus size={20} />
+        <Plus size={18} strokeWidth={2} />
         <span>New session</span>
       </button>
       <div className={styles.iconButtons}>
@@ -39,7 +39,7 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
           className={styles.iconButton}
           aria-label="Search"
         >
-          <Search size={20} />
+          <Search size={18} strokeWidth={2} />
         </button>
         <button
           ref={customizeButtonRef}
@@ -47,7 +47,7 @@ export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => voi
           className={styles.iconButton}
           aria-label="Customize"
         >
-          <Settings size={20} />
+          <Settings size={18} strokeWidth={2} />
         </button>
       </div>
       <CustomizeMenu

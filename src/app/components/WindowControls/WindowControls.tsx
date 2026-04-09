@@ -12,13 +12,13 @@ export function WindowControls() {
   return (
     <div className={styles.windowControls}>
       <button onClick={handleMinimize} aria-label="Minimize" className={styles.button}>
-        <Minus size={16} />
+        <Minus size={16} strokeWidth={2} />
       </button>
       <button onClick={handleMaximize} aria-label="Maximize" className={styles.button}>
-        <Square size={16} />
+        <Square size={16} strokeWidth={2} />
       </button>
       <button onClick={handleClose} aria-label="Close" className={styles.closeButton}>
-        <X size={16} />
+        <X size={16} strokeWidth={2} />
       </button>
     </div>
   )

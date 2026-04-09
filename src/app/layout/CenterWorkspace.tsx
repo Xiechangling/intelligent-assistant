@@ -357,7 +357,7 @@ function SessionRow({ row, onOpen }: { row: DesktopChooserRow; onOpen: (sessionI
       </div>
       <div className="workspace__session-action-row">
         <span className="workspace__session-action-label">{actionLabel}</span>
-        <ArrowUpRight size={14} />
+        <ArrowUpRight size={18} strokeWidth={2} />
       </div>
     </button>
   )
@@ -401,12 +401,12 @@ function NoWorkspaceState({
       <p>Open a local workspace to resume a coding session, attach to recent work, or start a new session.</p>
       <div className="workspace__state-actions workspace__state-actions--hero">
         <button className="workspace__primary-action" onClick={onOpenWorkspace}>
-          <FolderOpen size={14} />
+          <FolderOpen size={18} strokeWidth={2} />
           <span>Open workspace</span>
         </button>
       </div>
       <button className="workspace__conversation-entry" onClick={() => onConversation().catch(() => undefined)}>
-        <MessageSquare size={14} />
+        <MessageSquare size={18} strokeWidth={2} />
         <span>Send message without opening a workspace</span>
       </button>
     </section>
@@ -585,7 +585,7 @@ export function CenterWorkspace() {
       {assistantError ? (
         <div className="workspace__banner workspace__banner--error">
           <strong>
-            <AlertTriangle size={14} /> Assistant request failed
+            <AlertTriangle size={18} strokeWidth={2} /> Assistant request failed
           </strong>
           <p>{assistantError}</p>
         </div>
@@ -658,7 +658,7 @@ export function CenterWorkspace() {
           </div>
 
           <button className="workspace__conversation-entry" onClick={() => createConversationSession().catch(() => undefined)}>
-            <MessageSquare size={14} />
+            <MessageSquare size={18} strokeWidth={2} />
             <span>Send message without switching the coding workspace</span>
           </button>
         </section>

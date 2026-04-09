@@ -111,7 +111,7 @@ export function Composer({
           onClick={() => addFileAttachments().catch(() => undefined)}
           disabled={disabled}
         >
-          <FilePlus2 size={14} />
+          <FilePlus2 size={18} strokeWidth={2} />
           <span>File</span>
         </button>
         <button
@@ -120,7 +120,7 @@ export function Composer({
           onClick={() => addImageAttachments().catch(() => undefined)}
           disabled={disabled}
         >
-          <FileImage size={14} />
+          <FileImage size={18} strokeWidth={2} />
           <span>Image</span>
         </button>
         <span className="composer__slash-hint">Type / to use slash commands</span>
@@ -163,7 +163,7 @@ export function Composer({
           aria-label={buttonLabel}
           title={mode === 'project' ? 'Ctrl/Cmd + Enter sends instruction' : 'Ctrl/Cmd + Enter sends message'}
         >
-          <SendHorizontal size={15} />
+          <SendHorizontal size={18} strokeWidth={2} />
         </button>
       </div>
       <div className="composer__footer">

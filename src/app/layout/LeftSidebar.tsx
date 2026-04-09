@@ -107,7 +107,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
       <section className="sidebar__project-picker">
         <div className="sidebar__project-name">{projectName}</div>
         <button className="sidebar__project-button" onClick={handleProjectPick}>
-          <FolderOpen size={13} />
+          <FolderOpen size={16} strokeWidth={2} />
           <span>Open workspace</span>
           <KeyboardShortcutHint shortcut="ctrl+o" />
         </button>
@@ -117,7 +117,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
       <section className="sidebar__section">
         <div className="sidebar__section-header">
           <h2 className="sidebar__title-wrap">
-            <Folder size={13} />
+            <Folder size={16} strokeWidth={2} />
             <span className="sidebar__title">Workspaces</span>
           </h2>
         </div>
@@ -133,7 +133,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
                   title={project.path ?? project.name}
                 >
                   <div className="sidebar__row-head">
-                    <Folder size={13} />
+                    <Folder size={16} strokeWidth={2} />
                     <strong>{project.name}</strong>
                   </div>
                   <small>{project.path ?? 'Local workspace'}</small>
@@ -149,7 +149,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
       <section className="sidebar__section">
         <div className="sidebar__section-header">
           <h2 className="sidebar__title-wrap">
-            <Clock3 size={13} />
+            <Clock3 size={16} strokeWidth={2} />
             <span className="sidebar__title">Recent sessions</span>
           </h2>
         </div>
@@ -172,7 +172,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
                     >
                       <div className="sidebar__row-head sidebar__row-head--spread">
                         <div className="sidebar__row-head">
-                          <MessageSquare size={13} />
+                          <MessageSquare size={16} strokeWidth={2} />
                           <strong>{session.title}</strong>
                         </div>
                         {badgeLabel ? (
@@ -211,7 +211,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
                     >
                       <div className="sidebar__row-head sidebar__row-head--spread">
                         <div className="sidebar__row-head">
-                          <MessageSquare size={13} />
+                          <MessageSquare size={16} strokeWidth={2} />
                           <strong>{session.title}</strong>
                         </div>
                         {badgeLabel ? (
@@ -250,7 +250,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
                     >
                       <div className="sidebar__row-head sidebar__row-head--spread">
                         <div className="sidebar__row-head">
-                          <MessageSquare size={13} />
+                          <MessageSquare size={16} strokeWidth={2} />
                           <strong>{session.title}</strong>
                         </div>
                         {badgeLabel ? (
@@ -289,7 +289,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
                     >
                       <div className="sidebar__row-head sidebar__row-head--spread">
                         <div className="sidebar__row-head">
-                          <MessageSquare size={13} />
+                          <MessageSquare size={16} strokeWidth={2} />
                           <strong>{session.title}</strong>
                         </div>
                         {badgeLabel ? (
@@ -328,7 +328,7 @@ export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
                     >
                       <div className="sidebar__row-head sidebar__row-head--spread">
                         <div className="sidebar__row-head">
-                          <MessageSquare size={13} />
+                          <MessageSquare size={16} strokeWidth={2} />
                           <strong>{session.title}</strong>
                         </div>
                         {badgeLabel ? (
