@@ -1,0 +1,23 @@
+.codeBlock {
+  margin: 1em 0;
+  padding: 1em;
+  background-color: var(--color-bg-secondary, #f6f8fa);
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.codeBlock code {
+  display: block;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .codeBlock {
+  background-color: var(--color-bg-secondary, #161b22);
+}
