@@ -2,7 +2,7 @@ import { Plus, Search, Settings } from 'lucide-react'
 import { useAppShellStore } from '../../state/appShellStore'
 import styles from './SidebarTopActions.module.css'
 
-export function SidebarTopActions() {
+export function SidebarTopActions({ onSearchClick }: { onSearchClick?: () => void }) {
   const { createProjectSession } = useAppShellStore()
 
   const handleNewSession = () => {
@@ -10,8 +10,9 @@ export function SidebarTopActions() {
   }
 
   const handleSearch = () => {
-    // Stub for Phase 9
-    console.log('Search clicked - to be implemented in Phase 9')
+    if (onSearchClick) {
+      onSearchClick()
+    }
   }
 
   const handleCustomize = () => {

@@ -2,11 +2,14 @@ import React from 'react'
 import { CenterWorkspace } from './CenterWorkspace'
 import { LeftSidebar } from './LeftSidebar'
 import { TopToolbar } from './TopToolbar'
+import { GlobalSearch } from '../components/GlobalSearch'
 import { useAppShellStore } from '../state/appShellStore'
 import { useGlobalKeybindings } from '../hooks/useGlobalKeybindings'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
 export function AppShell() {
-  const { keybindingsEnabled, macOSOptionMappingEnabled, theme } = useAppShellStore()
+  const { keybindingsEnabled, macOSOptionMappingEnabled, theme, createProjectSession, setCurrentMode } = useAppShellStore()
+  const [searchOpen, setSearchOpen] = React.useState(false)
 
   // Apply theme immediately on mount to prevent flash
   React.useEffect(() => {
@@ -51,17 +54,28 @@ export function AppShell() {
     macOSOptionMapping: macOSOptionMappingEnabled,
   })
 
+  // Register keyboard shortcuts
+  useKeyboardShortcuts({
+    'ctrl+f': () => setSearchOpen(true),
+    'escape': () => setSearchOpen(false),
+    'ctrl+n': () => createProjectSession(),
+    'ctrl+1': () => setCurrentMode('chat'),
+    'ctrl+2': () => setCurrentMode('search'),
+    'ctrl+3': () => setCurrentMode('navigate'),
+  })
+
   return (
     <div className="app-shell">
       <header className="app-shell__top">
         <TopToolbar />
       </header>
       <aside className="app-shell__left">
-        <LeftSidebar />
+        <LeftSidebar onSearchClick={() => setSearchOpen(true)} />
       </aside>
       <main className="app-shell__center">
         <CenterWorkspace />
       </main>
+      <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   )
 }

@@ -50,7 +50,7 @@ function attentionTone(attention: 'approval' | 'review' | 'failure' | 'recovery'
   }
 }
 
-export function LeftSidebar() {
+export function LeftSidebar({ onSearchClick }: { onSearchClick?: () => void }) {
   const {
     activeProjectPath,
     activeSession,
@@ -101,7 +101,7 @@ export function LeftSidebar() {
   return (
     <div className="sidebar">
       {/* Top actions */}
-      <SidebarTopActions />
+      <SidebarTopActions onSearchClick={onSearchClick} />
 
       {/* Project picker at top */}
       <section className="sidebar__project-picker">
