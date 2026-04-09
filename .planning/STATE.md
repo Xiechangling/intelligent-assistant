@@ -12,19 +12,19 @@
 
 ## Current Position
 
-**Phase:** 8 / 10
-**Plan:** 7 / 7 (Awaiting Verification)
-**Status:** Wave 1-3 complete, awaiting Wave 4 human verification
+**Phase:** 9 / 10
+**Plan:** 0 / 7 (Planning)
+**Status:** Phase 8 complete, starting Phase 9
 
 **Progress:**
 ```
-[████████░░░░░░░░░░░░] 40% (2/4 phases)
+[████████████░░░░░░░░] 60% (2/4 phases)
 ```
 
 **Phase breakdown:**
 - Phase 7: 技术准备与基础组件 - Complete (5/5 plans)
-- Phase 8: 核心布局重构 - Awaiting Verification (6/7 plans complete)
-- Phase 9: 增强交互功能 - Not started
+- Phase 8: 核心布局重构 - Complete (7/7 plans, verified)
+- Phase 9: 增强交互功能 - Planning
 - Phase 10: 视觉对齐与打磨 - Not started
 
 ## Performance Metrics
@@ -41,8 +41,8 @@
 
 **Plans:**
 - Total: 12 (Phase 7 + Phase 8)
-- Complete: 11
-- In progress: 1 (awaiting verification)
+- Complete: 12
+- In progress: 0
 
 **Test coverage:**
 - E2E tests: TBD
@@ -68,12 +68,12 @@
 
 ### Active TODOs
 
-- [ ] 执行 Phase 8 Plan 08-07 人工验证
-- [ ] 启动开发服务器验证布局重构成果
-- [ ] 测试窗口控制（最小化/最大化/关闭）
-- [ ] 测试导航按钮（前进/后退）
-- [ ] 验证两列布局渲染正确
 - [ ] 开始 Phase 9 规划（增强交互功能）
+- [ ] 实现三模式切换（Chat/Cowork/Code）
+- [ ] 实现全局搜索和快捷键系统
+- [ ] 实现 Customize 菜单
+- [ ] 增强输入框集成语音和模型选择器
+- [ ] 实现导航快捷键（Alt+Left/Right）
 
 ### Known Blockers
 
@@ -81,6 +81,8 @@
 
 ### Recent Changes
 
+- 2026-04-09: 完成 Phase 8 验证（4/4 must-haves 通过）
+- 2026-04-09: 完成 Phase 8 Wave 4 人工验证（Plan 08-07）
 - 2026-04-09: 完成 Phase 8 Wave 1-3（Plans 08-01 到 08-06）
 - 2026-04-09: 清理 appShellStore 移除审批/审查状态，添加导航历史
 - 2026-04-09: 归档 RightPanel 和 BottomPanel 到 _archived 目录
