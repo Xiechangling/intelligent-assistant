@@ -52,7 +52,7 @@
   color: var(--text-primary, #1a1d24);
   text-align: left;
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: background-color 200ms ease-out;
 }
 
 .resultItem:hover {

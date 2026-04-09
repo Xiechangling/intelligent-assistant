@@ -15,7 +15,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.2s ease-out;
+  transition: background-color 200ms ease-out;
 }
 
 .button:hover:not(:disabled) {

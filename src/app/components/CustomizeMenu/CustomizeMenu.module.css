@@ -41,7 +41,7 @@
   text-align: left;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 150ms ease;
+  transition: background-color 200ms ease-out;
 }
 
 .menuItem:hover {

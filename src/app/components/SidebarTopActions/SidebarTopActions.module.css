@@ -19,7 +19,7 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 200ms ease-out;
 }
 
 .primaryButton:hover {
@@ -46,7 +46,7 @@
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 200ms ease-out;
 }
 
 .iconButton:hover {
