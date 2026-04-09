@@ -7,7 +7,7 @@ import {
 import { pickProjectDirectory } from '../services/projectService'
 import { useAppShellStore } from '../state/appShellStore'
 import { Composer } from '../components/Composer'
-import { EmptyState } from '../components/EmptyState'
+import { EmptyState } from '../components/EmptyState/EmptyState'
 import type {
   DesktopChooserRow,
   DesktopSessionHeader,
